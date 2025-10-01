@@ -1,7 +1,7 @@
 # 📊 Projekt Követő Rendszer - Fejlesztési Állapot
 
 **Utolsó frissítés:** 2025-10-01
-**Státusz:** Backend + Frontend MVP kész + Task CRUD + Project Edit/Delete implementálva ✅
+**Státusz:** Backend + Frontend MVP kész + Task CRUD + Project Edit/Delete + Project Details Modal ✅
 
 ---
 
@@ -96,6 +96,7 @@ socket.on('user:offline', ({ socketId }) => {})
   - Dátum mezők validációval
   - **Projekt szerkesztés (Edit gomb)**
   - **Projekt törlés (Delete gomb)**
+  - **Projekt részletek modal** (kattintható kártyák + Részletek gomb)
 
 - ✅ **Task CRUD UI**
   - Task lista megjelenítés
@@ -185,7 +186,7 @@ npx playwright test socket-tests.spec.js --reporter=list
 ### Fejlesztés alatt:
 - [x] Task CRUD űrlapok frontend-en ✅ (2025-10-01 elkészült)
 - [x] Projekt szerkesztés/törlés UI ✅ (2025-10-01 elkészült)
-- [ ] Projekt részletek modal/oldal
+- [x] Projekt részletek modal ✅ (2025-10-01 elkészült)
 - [ ] User management UI
 - [ ] Export/Import funkciók
 - [ ] Dark mode
@@ -245,9 +246,10 @@ f:\AI\Project koveto/
 │   ├── .gitignore
 │   └── README.md
 ├── frontend/
-│   ├── index.html (~60KB, Task CRUD + Project Edit/Delete)
+│   ├── index.html (~65KB, Task CRUD + Project Edit/Delete + Details Modal)
 │   ├── index-backup.html (original MVP)
-│   └── index-before-patch-remove.html (backup)
+│   ├── index-before-patch-remove.html (backup)
+│   └── index-before-modal.html (backup before modal)
 ├── project-summary.md
 └── SESSION-STATUS.md (ez a fájl)
 ```
@@ -289,7 +291,7 @@ f:\AI\Project koveto/
 
 - REST API átlagos válaszidő: ~40ms
 - Socket.IO broadcast latency: <10ms
-- Frontend méret: ~60KB (single HTML with Task CRUD)
+- Frontend méret: ~65KB (single HTML with Task CRUD + Details Modal)
 - Backend dependencies: 201 packages
 
 ---
@@ -350,7 +352,6 @@ http://localhost:8000
 
 - [ ] MySQL nincs telepítve (mock server-t használunk)
 - [ ] User lista lekérdezés endpoint nincs használva frontend-en
-- [ ] Projekt részletek modal még nincs implementálva
 
 ---
 
@@ -368,9 +369,10 @@ http://localhost:8000
 10. ✅ Glassmorphism UI design
 11. ✅ Task CRUD UI komplett (lista, szűrés, CRUD)
 12. ✅ Project Edit/Delete funkciók működnek
+13. ✅ Project Details Modal (részletes projekt nézet)
 
 ---
 
-**Projekt készültség:** 80% (MVP + Task CRUD + Project Edit/Delete kész, haladó funkciók fejlesztés alatt)
+**Projekt készültség:** 85% (MVP + Task CRUD + Project Edit/Delete + Details Modal kész, haladó funkciók fejlesztés alatt)
 
 **Következő session indulhat innen!** 🚀

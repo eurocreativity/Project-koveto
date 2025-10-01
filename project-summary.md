@@ -360,8 +360,105 @@ socket.on('task:created', (task) => {
 - `socket.on('project:deleted', removeProjectFromDOM)`
 
 #### Frontend fájl méret
-- **index.html**: ~60KB (Task CRUD + Project Edit/Delete implementációval)
+- **index.html**: ~65KB (Task CRUD + Project Edit/Delete + Details Modal implementációval)
 - **Biztonsági mentések**: index-backup.html, index-before-patch-remove.html
+
+### 6.4 Project Details Modal (2025-10-01)
+
+#### Modal funkcionalitás
+- **Kattintható projekt kártyák**: Bármely projekt kártyára kattintva megnyílik a részletes nézet
+- **Részletek gomb**: Zöld "👁️ Részletek" gomb minden projekt kártyán
+- **Modal overlay**: Háttér blur effekt, kattintásra bezáródik
+- **Animációk**: fadeIn overlay, slideUp modal tartalom
+
+#### Modal tartalom
+1. **Projekt alapadatok**:
+   - Projekt név és státusz badge (open/in_progress/completed)
+   - Felelős neve
+   - Kezdő és befejező dátum
+   - Részletes leírás (ha van)
+
+2. **Progress tracking**:
+   - Visual progress bar (0-100%)
+   - Százalékos készültség számítása: (completedTasks / totalTasks) * 100
+
+3. **Task statisztikák**:
+   - 📊 Összes feladat száma
+   - ✅ Befejezett feladatok száma
+   - 🔄 Folyamatban lévő feladatok száma
+   - 📋 Nyitott feladatok száma
+
+4. **Task lista**:
+   - Összes projekthez tartozó feladat megjelenítése
+   - Feladat név, leírás, határidő, felelős
+   - Státusz és prioritás badge-ek színkódolással
+   - Üres állapot kezelés: "📋 Még nincs feladat hozzáadva"
+
+5. **Műveletek**:
+   - ✏️ Szerkesztés gomb (modal bezárása + edit form megnyitása)
+   - ❌ Bezárás gomb (modal bezárása)
+
+#### CSS osztályok
+- `.modal-overlay` - Háttér overlay blur effekttel
+- `.modal-content` - Központi modal ablak (max-width: 900px)
+- `.modal-header` - Gradient fejléc (purple-violet)
+- `.modal-close` - X bezárás gomb (animált hover)
+- `.modal-body` - Modal tartalom scroll területtel
+- `.detail-row`, `.detail-item` - Projekt adatok megjelenítés
+- `.progress-bar-container`, `.progress-bar` - Progress megjelenítés
+- `.task-stats` - Task statisztikák grid layout
+- `.tasks-section` - Task lista szekció
+- `.task-item` - Egyedi task kártya
+
+#### JavaScript függvények
+```javascript
+// Modal megnyitás
+async function showProjectDetails(projectId) {
+    // 1. Projekt lekérése projects tömbből
+    const project = projects.find(p => p.id === projectId);
+
+    // 2. Projekt task-jainak szűrése
+    const projectTasks = tasks.filter(t => t.project_id === projectId);
+
+    // 3. Task statisztikák számítása
+    const totalTasks = projectTasks.length;
+    const completedTasks = projectTasks.filter(t => t.status === 'completed').length;
+    const inProgressTasks = projectTasks.filter(t => t.status === 'in_progress').length;
+    const openTasks = projectTasks.filter(t => t.status === 'open').length;
+    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    // 4. Modal HTML generálás
+    // 5. Modal hozzáadása DOM-hoz
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'projectDetailsModal';
+    modalContainer.innerHTML = modalHTML;
+    document.body.appendChild(modalContainer);
+}
+
+// Modal bezárás
+function closeProjectDetails(event) {
+    if (event) {
+        if (event.target.className !== 'modal-overlay') return;
+    }
+    const modal = document.getElementById('projectDetailsModal');
+    if (modal) modal.remove();
+}
+
+// Edit gomb a modalban
+onclick="closeProjectDetails(); editProject(${project.id})"
+```
+
+#### Event handling
+- **Overlay click**: Modal bezárása (csak ha közvetlenül az overlay-re kattintanak)
+- **event.stopPropagation()**: Megakadályozza a buborékolást a gombokon
+- **Modal content click**: Nem zárja be a modalt
+- **ESC billentyű**: Nincs implementálva (TODO)
+
+#### Frontend fájl frissítés
+- **index.html**: ~65KB (Task CRUD + Project Edit/Delete + Details Modal)
+- **Backup készítve**: index-before-modal.html
+- **Python script használat**: Modal CSS és JavaScript hozzáadása (Edit tool hibák miatt)
+
 
 
 ---
@@ -537,6 +634,7 @@ chown web1:client1 -R .
 ### 5. FÁZIS – Haladó funkciók (3-5 nap)
 - ✅ Task CRUD UI (lista, szűrés, CRUD) - 2025-10-01
 - ✅ Project Edit/Delete UI - 2025-10-01
+- ✅ Project Details Modal - 2025-10-01
 - [ ] Drag & drop naptárban (FullCalendar)
 - [ ] Export/Import (JSON, CSV, Excel)
 - [ ] Fejlett szűrők és keresés
