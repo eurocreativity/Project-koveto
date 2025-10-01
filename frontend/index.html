@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projekt Követő Rendszer</title>
+
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(138, 43, 226, 0.3), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255, 182, 193, 0.2), transparent 50%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: white;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-info {
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .connection-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        .connection-status.disconnected {
+            background: #f44336;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Auth Screen */
+        .auth-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Content */
+        .content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            margin-left: 8px;
+        }
+
+        /* Projects and Tasks List */
+        .projects-list {
+            margin-top: 20px;
+        }
+
+        .project-card, .task-card {
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .project-card {
+            cursor: pointer;
+        }
+
+        .project-card:hover, .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .project-header, .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .project-title, .task-title {
+            font-size: 1.3em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .status-open {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-in_progress {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-completed {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .priority-low {
+            background: #e0f2f1;
+            color: #00796b;
+        }
+
+        .priority-medium {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .priority-high {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .progress-bar-container {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filters select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+
+    <script>
+        // Configuration
+        const API_URL = 'http://localhost:3001/api';
+        const SOCKET_URL = 'http://localhost:3001';
+
+        // Global state
+        let currentUser = null;
+        let authToken = null;
+        let socket = null;
+        let calendar = null;
+        let projects = [];
+        let tasks = [];
+        let users = [];
+
+        // Initialize app
+        function initApp() {
+            checkAuth();
+        }
+
+        // Check if user is authenticated
+        function checkAuth() {
+            authToken = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('currentUser');
+
+            if (authToken && userData) {
+                currentUser = JSON.parse(userData);
+                showMainApp();
+                connectSocket();
+                loadData();
+            } else {
+                showAuthScreen();
+            }
+        }
+
+        // Show authentication screen
+        function showAuthScreen() {
+            document.getElementById('app').innerHTML = `
+                <div class="auth-screen">
+                    <div class="auth-card">
+                        <h2 style="margin-bottom: 30px; text-align: center;">📊 Projekt Követő</h2>
+
+                        <div class="tabs" style="justify-content: center;">
+                            <button class="tab active" onclick="showLoginForm()">Bejelentkezés</button>
+                            <button class="tab" onclick="showRegisterForm()">Regisztráció</button>
+                        </div>
+
+                        <div id="loginForm">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="loginEmail" value="janos@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Jelszó</label>
+                                <input type="password" id="loginPassword" value="password123">
+                            </div>
+                            <button class="btn" onclick="login()" style="width: 100%;">Bejelentkezés</button>
+                        </div>
+
+                        <div id="registerForm" class="hidden">
+                            <div class="form-group">
+                                <label>Név</label>
+                                <input type="text" id="registerName">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="registerEmail">
+                            </div>
+                            <div class="form-group">
+                                <label>Jelszó</label>
+                                <input type="password" id="registerPassword">
+                            </div>
+                            <button class="btn" onclick="register()" style="width: 100%;">Regisztráció</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showLoginForm() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+        }
+
+        function showRegisterForm() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+        }
+
+        // Login
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    authToken = data.data.token;
+                    currentUser = data.data.user;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showMainApp();
+                    connectSocket();
+                    loadData();
+                    showNotification('Sikeres bejelentkezés!');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Hiba történt a bejelentkezés során', 'error');
+                console.error(error);
+            }
+        }
+
+        // Register
+        async function register() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    authToken = data.data.token;
+                    currentUser = data.data.user;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showMainApp();
+                    connectSocket();
+                    loadData();
+                    showNotification('Sikeres regisztráció!');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Hiba történt a regisztráció során', 'error');
+                console.error(error);
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            if (socket) socket.disconnect();
+            authToken = null;
+            currentUser = null;
+            showAuthScreen();
+            showNotification('Sikeres kijelentkezés');
+        }
+
+        // Connect to Socket.IO
+        function connectSocket() {
+            socket = io(SOCKET_URL);
+
+            socket.on('connect', () => {
+                console.log('✅ Socket.IO connected');
+                updateConnectionStatus(true);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('❌ Socket.IO disconnected');
+                updateConnectionStatus(false);
+            });
+
+            // Real-time event listeners
+            socket.on('project:created', (project) => {
+                console.log('📢 Project created:', project.name);
+                projects.push(project);
+                renderProjects();
+                updateProjectSelects();
+                if (calendar) loadCalendarEvents();
+                showNotification(`Új projekt: ${project.name}`);
+            });
+
+            socket.on('project:updated', (project) => {
+                console.log('📢 Project updated:', project.name);
+                const index = projects.findIndex(p => p.id === project.id);
+                if (index !== -1) {
+                    projects[index] = project;
+                    renderProjects();
+                    if (calendar) loadCalendarEvents();
+                    showNotification(`Projekt frissítve: ${project.name}`);
+                }
+            });
+
+            socket.on('project:deleted', (data) => {
+                console.log('📢 Project deleted:', data.id);
+                projects = projects.filter(p => p.id !== data.id);
+                renderProjects();
+                updateProjectSelects();
+                if (calendar) loadCalendarEvents();
+                showNotification('Projekt törölve');
+            });
+
+            socket.on('task:created', (task) => {
+                console.log('📢 Task created:', task.name);
+                tasks.push(task);
+                renderTasks();
+                if (calendar) loadCalendarEvents();
+                showNotification(`Új feladat: ${task.name}`);
+            });
+
+            socket.on('task:updated', (task) => {
+                console.log('📢 Task updated:', task.name);
+                const index = tasks.findIndex(t => t.id === task.id);
+                if (index !== -1) {
+                    tasks[index] = task;
+                    renderTasks();
+                    if (calendar) loadCalendarEvents();
+                }
+            });
+
+            socket.on('task:deleted', (data) => {
+                console.log('📢 Task deleted:', data.id);
+                tasks = tasks.filter(t => t.id !== data.id);
+                renderTasks();
+                if (calendar) loadCalendarEvents();
+            });
+        }
+
+        // Update connection status indicator
+        function updateConnectionStatus(connected) {
+            const indicator = document.querySelector('.connection-status');
+            if (indicator) {
+                if (connected) {
+                    indicator.classList.remove('disconnected');
+                } else {
+                    indicator.classList.add('disconnected');
+                }
+            }
+        }
+
+        // Show main app
+        function showMainApp() {
+            document.getElementById('app').innerHTML = `
+                <div class="container">
+                    <header>
+                        <h1>📊 Projekt Követő</h1>
+                        <div class="user-info">
+                            <span class="connection-status"></span>
+                            <span>👤 ${currentUser.name}</span>
+                            <button class="btn btn-secondary" onclick="logout()">Kilépés</button>
+                        </div>
+                    </header>
+
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('dashboard')">🏠 Dashboard</button>
+                        <button class="tab" onclick="switchTab('projects')">📁 Projektek</button>
+                        <button class="tab" onclick="switchTab('tasks')">📋 Feladatok</button>
+                        <button class="tab" onclick="switchTab('calendar')">📅 Naptár</button>
+                        <button class="tab" onclick="switchTab('new-project')">➕ Új Projekt</button>
+                        <button class="tab" onclick="switchTab('new-task')">➕ Új Feladat</button>
+                    </div>
+
+                    <div class="content">
+                        <div id="dashboard" class="section active">
+                            <h2>📈 Áttekintés</h2>
+                            <div class="projects-list" id="dashboardProjects">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+
+                        <div id="projects" class="section">
+                            <h2>📁 Összes projekt</h2>
+                            <div class="projects-list" id="allProjects">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+
+                        <div id="tasks" class="section">
+                            <h2>📋 Összes feladat</h2>
+                            <div class="filters">
+                                <select id="taskFilterProject" onchange="renderTasks()">
+                                    <option value="">Minden projekt</option>
+                                </select>
+                                <select id="taskFilterStatus" onchange="renderTasks()">
+                                    <option value="">Minden státusz</option>
+                                    <option value="open">Nyitott</option>
+                                    <option value="in_progress">Folyamatban</option>
+                                    <option value="completed">Befejezett</option>
+                                </select>
+                                <select id="taskFilterPriority" onchange="renderTasks()">
+                                    <option value="">Minden prioritás</option>
+                                    <option value="low">Alacsony</option>
+                                    <option value="medium">Közepes</option>
+                                    <option value="high">Magas</option>
+                                </select>
+                            </div>
+                            <div id="allTasks">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+
+                        <div id="calendar" class="section">
+                            <h2>📅 Naptár nézet</h2>
+                            <div id="calendarContainer"></div>
+                        </div>
+
+                        <div id="new-project" class="section">
+                            <h2>➕ Új projekt</h2>
+                            <form onsubmit="createProject(event)">
+                                <div class="form-group">
+                                    <label>Projekt neve *</label>
+                                    <input type="text" id="projectName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Leírás</label>
+                                    <textarea id="projectDesc" rows="4"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Kezdő dátum *</label>
+                                    <input type="date" id="projectStartDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Határidő *</label>
+                                    <input type="date" id="projectEndDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Felelős</label>
+                                    <select id="projectOwner">
+                                        <option value="${currentUser.id}">${currentUser.name}</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Státusz</label>
+                                    <select id="projectStatus">
+                                        <option value="open">Nyitott</option>
+                                        <option value="in_progress">Folyamatban</option>
+                                        <option value="completed">Befejezett</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Szín</label>
+                                    <input type="color" id="projectColor" value="#667eea">
+                                </div>
+                                <button type="submit" class="btn">💾 Projekt mentése</button>
+                            </form>
+                        </div>
+
+                        <div id="new-task" class="section">
+                            <h2 id="taskFormTitle">➕ Új feladat</h2>
+                            <form onsubmit="saveTask(event)" id="taskForm">
+                                <input type="hidden" id="editTaskId" value="">
+                                <div class="form-group">
+                                    <label>Feladat neve *</label>
+                                    <input type="text" id="taskName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Leírás</label>
+                                    <textarea id="taskDesc" rows="4"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Projekt *</label>
+                                    <select id="taskProject" required>
+                                        <option value="">Válassz projektet...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Kezdő dátum</label>
+                                    <input type="date" id="taskStartDate">
+                                </div>
+                                <div class="form-group">
+                                    <label>Határidő *</label>
+                                    <input type="date" id="taskDeadline" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Felelős</label>
+                                    <select id="taskOwner">
+                                        <option value="${currentUser.id}">${currentUser.name}</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Prioritás</label>
+                                    <select id="taskPriority">
+                                        <option value="low">Alacsony</option>
+                                        <option value="medium" selected>Közepes</option>
+                                        <option value="high">Magas</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Státusz</label>
+                                    <select id="taskStatus">
+                                        <option value="open">Nyitott</option>
+                                        <option value="in_progress">Folyamatban</option>
+                                        <option value="completed">Befejezett</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn">💾 Feladat mentése</button>
+                                <button type="button" class="btn btn-secondary" onclick="resetTaskForm()" style="margin-left: 10px;">🔄 Űrlap törlése</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'calendar' && !calendar) {
+                initCalendar();
+            }
+
+            if (tabName === 'tasks') {
+                renderTasks();
+            }
+        }
+
+        // Load all data
+        async function loadData() {
+            await Promise.all([
+                loadProjects(),
+                loadTasks()
+            ]);
+            renderProjects();
+            renderTasks();
+            updateProjectSelects();
+        }
+
+        // Load projects
+        async function loadProjects() {
+            console.log('🔄 Loading projects... Token:', authToken?.substring(0, 20) + '...');
+            try {
+                const response = await fetch(`${API_URL}/projects`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                console.log('📦 Projects response:', data);
+                if (data.success) {
+                    projects = data.data;
+                    console.log('✅ Projects loaded:', projects.length);
+                } else {
+                    console.error('❌ Failed to load projects:', data.message);
+                }
+            } catch (error) {
+                console.error('❌ Error loading projects:', error);
+            }
+        }
+
+        // Load tasks
+        async function loadTasks() {
+            try {
+                const response = await fetch(`${API_URL}/tasks`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    tasks = data.data;
+                }
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        }
+
+        // Update project select dropdowns
+        function updateProjectSelects() {
+            const taskProjectSelect = document.getElementById('taskProject');
+            const taskFilterProject = document.getElementById('taskFilterProject');
+
+            if (taskProjectSelect) {
+                const currentValue = taskProjectSelect.value;
+                taskProjectSelect.innerHTML = '<option value="">Válassz projektet...</option>' +
+                    projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                taskProjectSelect.value = currentValue;
+            }
+
+            if (taskFilterProject) {
+                const currentValue = taskFilterProject.value;
+                taskFilterProject.innerHTML = '<option value="">Minden projekt</option>' +
+                    projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                taskFilterProject.value = currentValue;
+            }
+        }
+
+        // Render projects
+        function renderProjects() {
+            const dashboardContainer = document.getElementById('dashboardProjects');
+            const allProjectsContainer = document.getElementById('allProjects');
+
+            if (!dashboardContainer || !allProjectsContainer) return;
+
+            const projectHTML = projects.map(p => `
+                <div class="project-card">
+                    <div class="project-header">
+                        <div class="project-title">${p.name}</div>
+                        <span class="status-badge status-${p.status}">
+                            ${p.status === 'open' ? 'Nyitott' : p.status === 'in_progress' ? 'Folyamatban' : 'Befejezett'}
+                        </span>
+                    </div>
+                    <p style="color: #666; margin-bottom: 10px;">${p.description || ''}</p>
+                    <div style="color: #666; font-size: 0.9em; margin-bottom: 10px;">
+                        📅 ${p.start_date} - ${p.end_date} | 👤 ${p.owner_name || 'Ismeretlen'}
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${p.progress || 0}%"></div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); editProject(${p.id})">✏️ Szerkesztés</button>
+                        <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deleteProject(${p.id})">🗑️ Törlés</button>
+                    </div>
+                </div>
+            `).join('');
+
+            dashboardContainer.innerHTML = projectHTML || '<p>Még nincs projekt</p>';
+            allProjectsContainer.innerHTML = projectHTML || '<p>Még nincs projekt</p>';
+        }
+
+        // Render tasks
+        function renderTasks() {
+            const tasksContainer = document.getElementById('allTasks');
+            if (!tasksContainer) return;
+
+            // Filter tasks
+            const filterProject = document.getElementById('taskFilterProject')?.value || '';
+            const filterStatus = document.getElementById('taskFilterStatus')?.value || '';
+            const filterPriority = document.getElementById('taskFilterPriority')?.value || '';
+
+            let filteredTasks = tasks;
+
+            if (filterProject) {
+                filteredTasks = filteredTasks.filter(t => t.project_id == filterProject);
+            }
+
+            if (filterStatus) {
+                filteredTasks = filteredTasks.filter(t => t.status === filterStatus);
+            }
+
+            if (filterPriority) {
+                filteredTasks = filteredTasks.filter(t => t.priority === filterPriority);
+            }
+
+            const taskHTML = filteredTasks.map(t => {
+                const project = projects.find(p => p.id === t.project_id);
+                return `
+                    <div class="task-card">
+                        <div class="task-header">
+                            <div class="task-title">📋 ${t.name}</div>
+                            <div>
+                                <span class="status-badge status-${t.status}">
+                                    ${t.status === 'open' ? 'Nyitott' : t.status === 'in_progress' ? 'Folyamatban' : 'Befejezett'}
+                                </span>
+                                <span class="status-badge priority-${t.priority}" style="margin-left: 5px;">
+                                    ${t.priority === 'low' ? 'Alacsony' : t.priority === 'medium' ? 'Közepes' : 'Magas'}
+                                </span>
+                            </div>
+                        </div>
+                        <p style="color: #666; margin-bottom: 10px;">${t.description || ''}</p>
+                        <div style="color: #666; font-size: 0.9em; margin-bottom: 10px;">
+                            📁 ${project?.name || 'Ismeretlen projekt'} |
+                            📅 Határidő: ${t.deadline} |
+                            👤 ${t.owner_name || 'Ismeretlen'}
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary btn-small" onclick="editTask(${t.id})">✏️ Szerkesztés</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteTask(${t.id})">🗑️ Törlés</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            tasksContainer.innerHTML = taskHTML || '<p>Még nincs feladat</p>';
+        }
+
+        // Create project
+        async function createProject(event) {
+            event.preventDefault();
+
+            const projectData = {
+                name: document.getElementById('projectName').value,
+                description: document.getElementById('projectDesc').value,
+                start_date: document.getElementById('projectStartDate').value,
+                end_date: document.getElementById('projectEndDate').value,
+                owner_id: parseInt(document.getElementById('projectOwner').value),
+                status: document.getElementById('projectStatus').value,
+                color: document.getElementById('projectColor').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/projects`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(projectData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Projekt létrehozva!');
+                    event.target.reset();
+                    switchTab('projects');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Hiba történt', 'error');
+                console.error(error);
+            }
+        }
+
+        // Save task (create or update)
+        async function saveTask(event) {
+            event.preventDefault();
+
+            const taskId = document.getElementById('editTaskId').value;
+            const taskData = {
+                name: document.getElementById('taskName').value,
+                description: document.getElementById('taskDesc').value,
+                project_id: parseInt(document.getElementById('taskProject').value),
+                start_date: document.getElementById('taskStartDate').value || null,
+                deadline: document.getElementById('taskDeadline').value,
+                owner_id: parseInt(document.getElementById('taskOwner').value),
+                priority: document.getElementById('taskPriority').value,
+                status: document.getElementById('taskStatus').value
+            };
+
+            try {
+                const url = taskId ? `${API_URL}/tasks/${taskId}` : `${API_URL}/tasks`;
+                const method = taskId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(taskData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification(taskId ? 'Feladat frissítve!' : 'Feladat létrehozva!');
+                    resetTaskForm();
+                    switchTab('tasks');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Hiba történt', 'error');
+                console.error(error);
+            }
+        }
+
+        // Edit project
+        function editProject(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            if (!document.getElementById('editProjectId')) {
+                const form = document.querySelector('#new-project form');
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.id = 'editProjectId';
+                hiddenField.value = '';
+                form.insertBefore(hiddenField, form.firstChild);
+                form.setAttribute('onsubmit', 'saveProject(event); return false;');
+                form.id = 'projectForm';
+            }
+
+            document.getElementById('editProjectId').value = project.id;
+            document.getElementById('projectName').value = project.name;
+            document.getElementById('projectDesc').value = project.description || '';
+            document.getElementById('projectStartDate').value = project.start_date;
+            document.getElementById('projectEndDate').value = project.end_date;
+            document.getElementById('projectOwner').value = project.owner_id;
+            document.getElementById('projectStatus').value = project.status;
+            document.getElementById('projectColor').value = project.color;
+
+            const titleEl = document.querySelector('#new-project h2');
+            if (titleEl) titleEl.textContent = '✏️ Projekt szerkesztése';
+
+            switchTab('new-project');
+        }
+
+        // Delete project
+        async function deleteProject(projectId) {
+            if (!confirm('Biztosan törölni szeretnéd ezt a projektet?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/projects/${projectId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Projekt törölve!');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Hiba történt', 'error');
+                console.error(error);
+            }
+        }
+
+        // Save project
+        async function saveProject(event) {
+            event.preventDefault();
+
+            const projectId = document.getElementById('editProjectId')?.value || '';
+            const projectData = {
+                name: document.getElementById('projectName').value,
+                description: document.getElementById('projectDesc').value,
+                start_date: document.getElementById('projectStartDate').value,
+                end_date: document.getElementById('projectEndDate').value,
+                owner_id: parseInt(document.getElementById('projectOwner').value),
+                status: document.getElementById('projectStatus').value,
+                color: document.getElementById('projectColor').value
+            };
+
+            try {
+                const url = projectId ? `${API_URL}/projects/${projectId}` : `${API_URL}/projects`;
+                const method = projectId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(projectData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification(projectId ? 'Projekt frissítve!' : 'Projekt létrehozva!');
+
+                    const form = document.getElementById('projectForm');
+                    if (form) form.reset();
+                    const editId = document.getElementById('editProjectId');
+                    if (editId) editId.value = '';
+                    const titleEl = document.querySelector('#new-project h2');
+                    if (titleEl) titleEl.textContent = '➕ Új projekt';
+                    document.getElementById('projectColor').value = '#667eea';
+
+                    switchTab('projects');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Hiba történt', 'error');
+                console.error(error);
+            }
+        }
+
+        // Edit task
+        function editTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            document.getElementById('editTaskId').value = task.id;
+            document.getElementById('taskName').value = task.name;
+            document.getElementById('taskDesc').value = task.description || '';
+            document.getElementById('taskProject').value = task.project_id;
+            document.getElementById('taskStartDate').value = task.start_date || '';
+            document.getElementById('taskDeadline').value = task.deadline;
+            document.getElementById('taskOwner').value = task.owner_id;
+            document.getElementById('taskPriority').value = task.priority;
+            document.getElementById('taskStatus').value = task.status;
+
+            document.getElementById('taskFormTitle').textContent = '✏️ Feladat szerkesztése';
+            switchTab('new-task');
+        }
+
+        // Delete task
+        async function deleteTask(taskId) {
+            if (!confirm('Biztosan törölni szeretnéd ezt a feladatot?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Feladat törölve!');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Hiba történt', 'error');
+                console.error(error);
+            }
+        }
+
+        // Reset task form
+        function resetTaskForm() {
+            document.getElementById('taskForm').reset();
+            document.getElementById('editTaskId').value = '';
+            document.getElementById('taskFormTitle').textContent = '➕ Új feladat';
+        }
+
+        // Initialize FullCalendar
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendarContainer');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'hu',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                events: [],
+                eventClick: function(info) {
+                    alert('Projekt: ' + info.event.title);
+                }
+            });
+
+            calendar.render();
+            loadCalendarEvents();
+        }
+
+        // Load calendar events
+        async function loadCalendarEvents() {
+            if (!calendar) return;
+
+            const events = [
+                ...projects.map(p => ({
+                    title: p.name,
+                    start: p.start_date,
+                    end: p.end_date,
+                    color: p.color
+                })),
+                ...tasks.map(t => ({
+                    title: `📋 ${t.name}`,
+                    start: t.deadline,
+                    color: '#f57c00'
+                }))
+            ];
+
+            calendar.removeAllEvents();
+            calendar.addEventSource(events);
+        }
+
+        // View project details
+        function viewProject(projectId) {
+            alert(`Projekt részletek: ID ${projectId}\n(Fejlesztés alatt)`);
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.background = type === 'error' ? '#f44336' : '#4caf50';
+            notification.style.color = 'white';
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+
+</body>
+</html>

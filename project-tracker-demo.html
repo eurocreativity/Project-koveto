@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projekt Követő - Demo</title>
+
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(138, 43, 226, 0.3), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255, 182, 193, 0.2), transparent 50%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            color: white;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .projects-list {
+            margin-top: 20px;
+        }
+
+        .project-card {
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .project-title {
+            font-size: 1.3em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .status-open {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-in_progress {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-completed {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .project-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .progress-bar-container {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        #calendar {
+            margin-top: 20px;
+        }
+
+        .task-list {
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+
+        .task-item {
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .priority-high {
+            border-left: 4px solid #f44336;
+        }
+
+        .priority-medium {
+            border-left: 4px solid #ff9800;
+        }
+
+        .priority-low {
+            border-left: 4px solid #4caf50;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .project-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Projekt Követő Rendszer</h1>
+            <p class="subtitle">Demo verzió - Single-file HTML alkalmazás</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('dashboard')">🏠 Dashboard</button>
+            <button class="tab" onclick="switchTab('projects')">📁 Projektek</button>
+            <button class="tab" onclick="switchTab('calendar')">📅 Naptár</button>
+            <button class="tab" onclick="switchTab('new-project')">➕ Új Projekt</button>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section active">
+                <h2>📈 Áttekintés</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Összes projekt</h3>
+                        <div class="value">12</div>
+                        <div>3 aktív, 9 befejezett</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Aktív feladatok</h3>
+                        <div class="value">27</div>
+                        <div>5 magas prioritású</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Határidők (30 nap)</h3>
+                        <div class="value">8</div>
+                        <div>2 lejárt határidő</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Csapattagok</h3>
+                        <div class="value">6</div>
+                        <div>4 aktív dolgozó</div>
+                    </div>
+                </div>
+
+                <h3>🔥 Aktív projektek</h3>
+                <div class="projects-list" id="activeProjects"></div>
+            </div>
+
+            <!-- Projects Section -->
+            <div id="projects" class="section">
+                <h2>📁 Összes projekt</h2>
+                <div class="projects-list" id="allProjects"></div>
+            </div>
+
+            <!-- Calendar Section -->
+            <div id="calendar-section" class="section">
+                <h2>📅 Naptár nézet</h2>
+                <div id="calendar"></div>
+            </div>
+
+            <!-- New Project Section -->
+            <div id="new-project" class="section">
+                <h2>➕ Új projekt létrehozása</h2>
+                <form id="projectForm">
+                    <div class="form-group">
+                        <label>Projekt neve *</label>
+                        <input type="text" id="projectName" required placeholder="pl. Webshop fejlesztés">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Leírás</label>
+                        <textarea id="projectDesc" rows="4" placeholder="Projekt részletes leírása..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kezdő dátum *</label>
+                        <input type="date" id="startDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Határidő *</label>
+                        <input type="date" id="endDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Felelős</label>
+                        <select id="owner">
+                            <option value="1">Kovács János</option>
+                            <option value="2">Nagy Anna</option>
+                            <option value="3">Tóth Péter</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Státusz</label>
+                        <select id="status">
+                            <option value="open">Nyitott</option>
+                            <option value="in_progress">Folyamatban</option>
+                            <option value="completed">Befejezett</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Szín (naptárhoz)</label>
+                        <input type="color" id="color" value="#667eea">
+                    </div>
+
+                    <button type="submit" class="btn">💾 Projekt mentése</button>
+                    <button type="reset" class="btn btn-secondary">🔄 Törlés</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <script>
+        // Demo data
+        const demoProjects = [
+            {
+                id: 1,
+                name: "E-commerce platform fejlesztés",
+                description: "Online webshop rendszer React + Node.js-sel",
+                startDate: "2025-01-15",
+                endDate: "2025-04-30",
+                owner: "Kovács János",
+                status: "in_progress",
+                color: "#667eea",
+                progress: 65,
+                tasks: [
+                    { name: "Backend API elkészítése", status: "completed", priority: "high" },
+                    { name: "Frontend komponensek", status: "in_progress", priority: "high" },
+                    { name: "Payment integráció", status: "open", priority: "medium" }
+                ]
+            },
+            {
+                id: 2,
+                name: "Mobilalkalmazás UI design",
+                description: "iOS és Android app design Figma-ban",
+                startDate: "2025-02-01",
+                endDate: "2025-03-15",
+                owner: "Nagy Anna",
+                status: "in_progress",
+                color: "#764ba2",
+                progress: 40,
+                tasks: [
+                    { name: "Wireframe készítés", status: "completed", priority: "medium" },
+                    { name: "UI mockup-ok", status: "in_progress", priority: "high" },
+                    { name: "Design system", status: "open", priority: "low" }
+                ]
+            },
+            {
+                id: 3,
+                name: "CRM rendszer migráció",
+                description: "Legacy rendszer átállítása Salesforce-ra",
+                startDate: "2024-11-01",
+                endDate: "2025-02-28",
+                owner: "Tóth Péter",
+                status: "in_progress",
+                color: "#f093fb",
+                progress: 80,
+                tasks: [
+                    { name: "Adatmigráció", status: "completed", priority: "high" },
+                    { name: "Felhasználói tesztelés", status: "in_progress", priority: "medium" },
+                    { name: "Dokumentáció", status: "open", priority: "low" }
+                ]
+            }
+        ];
+
+        // Switch tabs
+        function switchTab(tabName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+            // Show selected section
+            document.getElementById(tabName === 'calendar' ? 'calendar-section' : tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Initialize calendar if switching to calendar tab
+            if (tabName === 'calendar' && !window.calendarInitialized) {
+                initCalendar();
+            }
+        }
+
+        // Render projects
+        function renderProjects(containerId, projects) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = projects.map(p => `
+                <div class="project-card">
+                    <div class="project-header">
+                        <div class="project-title">${p.name}</div>
+                        <span class="status-badge status-${p.status}">
+                            ${p.status === 'open' ? 'Nyitott' : p.status === 'in_progress' ? 'Folyamatban' : 'Befejezett'}
+                        </span>
+                    </div>
+                    <div class="project-meta">
+                        <span>👤 ${p.owner}</span>
+                        <span>📅 ${p.startDate} - ${p.endDate}</span>
+                        <span>✅ ${p.progress}% kész</span>
+                    </div>
+                    <p style="color: #666; margin-bottom: 10px;">${p.description}</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${p.progress}%"></div>
+                    </div>
+                    <div class="task-list">
+                        ${p.tasks.map(t => `
+                            <div class="task-item priority-${t.priority}">
+                                <span>${t.name}</span>
+                                <span class="status-badge status-${t.status}" style="font-size: 0.75em; padding: 4px 10px;">
+                                    ${t.status === 'open' ? 'Nyitott' : t.status === 'in_progress' ? 'Folyamatban' : 'Kész'}
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize calendar
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'hu',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                events: demoProjects.map(p => ({
+                    title: p.name,
+                    start: p.startDate,
+                    end: p.endDate,
+                    color: p.color,
+                    extendedProps: {
+                        owner: p.owner,
+                        progress: p.progress
+                    }
+                })),
+                eventClick: function(info) {
+                    alert('Projekt: ' + info.event.title + '\n' +
+                          'Felelős: ' + info.event.extendedProps.owner + '\n' +
+                          'Készültség: ' + info.event.extendedProps.progress + '%');
+                }
+            });
+            calendar.render();
+            window.calendarInitialized = true;
+        }
+
+        // Form submission
+        document.getElementById('projectForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Demo módban a projektek nem kerülnek mentésre.\n\nÉles verzióban ez LocalStorage-ba vagy Supabase-be kerülne mentésre.');
+            this.reset();
+        });
+
+        // Initial render
+        renderProjects('activeProjects', demoProjects.filter(p => p.status === 'in_progress'));
+        renderProjects('allProjects', demoProjects);
+    </script>
+</body>
+</html>
