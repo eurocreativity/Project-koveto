@@ -353,6 +353,89 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* User Management */
+        .user-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-info-section {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .user-email {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 8px;
+        }
+
+        .user-meta {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .role-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .role-admin {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .role-user {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 10px;
+        }
+
         /* Filters */
         .filters {
             display: flex;
@@ -382,6 +465,8 @@
             justify-content: center;
             align-items: center;
             animation: fadeIn 0.3s ease;
+            padding: 20px 0;
+            overflow-y: auto;
         }
 
         @keyframes fadeIn {
@@ -764,6 +849,19 @@
                 renderTasks();
                 if (calendar) loadCalendarEvents();
             });
+
+            // User events
+            socket.on('user:updated', (user) => {
+                console.log('📢 User updated:', user.id);
+                const index = users.findIndex(u => u.id === user.id);
+                if (index !== -1) {
+                    users[index] = user;
+                } else {
+                    users.push(user);
+                }
+                renderUsers();
+                showNotification(`👤 ${user.name} frissítve!`);
+            });
         }
 
         // Update connection status indicator
@@ -795,7 +893,9 @@
                         <button class="tab active" onclick="switchTab('dashboard')">🏠 Dashboard</button>
                         <button class="tab" onclick="switchTab('projects')">📁 Projektek</button>
                         <button class="tab" onclick="switchTab('tasks')">📋 Feladatok</button>
+                        <button class="tab" onclick="switchTab('users')">👥 Felhasználók</button>
                         <button class="tab" onclick="switchTab('calendar')">📅 Naptár</button>
+                        <button class="tab" onclick="switchTab('settings')">⚙️ Beállítások</button>
                         <button class="tab" onclick="switchTab('new-project')">➕ Új Projekt</button>
                         <button class="tab" onclick="switchTab('new-task')">➕ Új Feladat</button>
                     </div>
@@ -809,14 +909,26 @@
                         </div>
 
                         <div id="projects" class="section">
-                            <h2>📁 Összes projekt</h2>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h2 style="margin: 0;">📁 Összes projekt</h2>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-sm" onclick="exportProjects('csv')" style="padding: 8px 16px;">📊 CSV Export</button>
+                                    <button class="btn btn-sm" onclick="exportProjects('json')" style="padding: 8px 16px;">📄 JSON Export</button>
+                                </div>
+                            </div>
                             <div class="projects-list" id="allProjects">
                                 <div class="spinner"></div>
                             </div>
                         </div>
 
                         <div id="tasks" class="section">
-                            <h2>📋 Összes feladat</h2>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h2 style="margin: 0;">📋 Összes feladat</h2>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-sm" onclick="exportTasks('csv')" style="padding: 8px 16px;">📊 CSV Export</button>
+                                    <button class="btn btn-sm" onclick="exportTasks('json')" style="padding: 8px 16px;">📄 JSON Export</button>
+                                </div>
+                            </div>
                             <div class="filters">
                                 <select id="taskFilterProject" onchange="renderTasks()">
                                     <option value="">Minden projekt</option>
@@ -839,9 +951,71 @@
                             </div>
                         </div>
 
+                        <div id="users" class="section">
+                            <h2>👥 Felhasználók kezelése</h2>
+                            <div id="allUsers">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+
                         <div id="calendar" class="section">
                             <h2>📅 Naptár nézet</h2>
                             <div id="calendarContainer"></div>
+                        </div>
+
+                        <div id="settings" class="section">
+                            <h2>⚙️ Beállítások & Adatkezelés</h2>
+
+                            <div style="background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px; margin-bottom: 20px;">
+                                <h3 style="margin-top: 0; color: #667eea;">📥 Import / Export</h3>
+                                <p style="color: #666; margin-bottom: 20px;">
+                                    Exportálj vagy importálj adatokat a rendszerbe.
+                                </p>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                                    <div style="border: 1px solid #667eea; border-radius: 12px; padding: 20px;">
+                                        <h4 style="margin-top: 0;">📤 Export</h4>
+                                        <p style="color: #666; font-size: 0.9em;">Projektek, feladatok külön exportálása</p>
+                                        <div style="margin-top: 15px;">
+                                            <p style="font-size: 0.85em; color: #999;">Projektek tab-on és Feladatok tab-on találhatók az export gombok.</p>
+                                        </div>
+                                    </div>
+
+                                    <div style="border: 1px solid #764ba2; border-radius: 12px; padding: 20px;">
+                                        <h4 style="margin-top: 0;">💾 Teljes mentés</h4>
+                                        <p style="color: #666; font-size: 0.9em;">Minden adat mentése JSON-be</p>
+                                        <button class="btn" onclick="exportAllData()" style="margin-top: 10px; width: 100%;">
+                                            💾 Teljes mentés letöltése
+                                        </button>
+                                    </div>
+
+                                    <div style="border: 1px solid #f093fb; border-radius: 12px; padding: 20px;">
+                                        <h4 style="margin-top: 0;">📥 Import</h4>
+                                        <p style="color: #666; font-size: 0.9em;">JSON fájl visszatöltése</p>
+                                        <button class="btn" onclick="showImportModal()" style="margin-top: 10px; width: 100%;">
+                                            📥 Adatok importálása
+                                        </button>
+                                    </div>
+
+                                    <div style="border: 1px solid #43e97b; border-radius: 12px; padding: 20px;">
+                                        <h4 style="margin-top: 0;">ℹ️ Információ</h4>
+                                        <p style="color: #666; font-size: 0.9em;">
+                                            <strong>CSV:</strong> Excel-kompatibilis<br>
+                                            <strong>JSON:</strong> Mentés/visszatöltés
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px;">
+                                <h3 style="margin-top: 0; color: #667eea;">📊 Rendszer információ</h3>
+                                <div style="color: #666;">
+                                    <p><strong>Projektek száma:</strong> <span id="settingsProjectCount">-</span></p>
+                                    <p><strong>Feladatok száma:</strong> <span id="settingsTaskCount">-</span></p>
+                                    <p><strong>Felhasználók száma:</strong> <span id="settingsUserCount">-</span></p>
+                                    <p><strong>Utolsó frissítés:</strong> <span id="settingsLastUpdate">-</span></p>
+                                </div>
+                            </div>
                         </div>
 
                         <div id="new-project" class="section">
@@ -957,16 +1131,39 @@
             if (tabName === 'tasks') {
                 renderTasks();
             }
+
+            if (tabName === 'users') {
+                renderUsers();
+            }
+
+            if (tabName === 'settings') {
+                updateSettingsStats();
+            }
+        }
+
+        // Update settings statistics
+        function updateSettingsStats() {
+            const projectCount = document.getElementById('settingsProjectCount');
+            const taskCount = document.getElementById('settingsTaskCount');
+            const userCount = document.getElementById('settingsUserCount');
+            const lastUpdate = document.getElementById('settingsLastUpdate');
+
+            if (projectCount) projectCount.textContent = projects.length;
+            if (taskCount) taskCount.textContent = tasks.length;
+            if (userCount) userCount.textContent = users.length;
+            if (lastUpdate) lastUpdate.textContent = new Date().toLocaleString('hu-HU');
         }
 
         // Load all data
         async function loadData() {
             await Promise.all([
                 loadProjects(),
-                loadTasks()
+                loadTasks(),
+                loadUsers()
             ]);
             renderProjects();
             renderTasks();
+            renderUsers();
             updateProjectSelects();
         }
 
@@ -1005,6 +1202,463 @@
             } catch (error) {
                 console.error('Error loading tasks:', error);
             }
+        }
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_URL}/users`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    users = data.data;
+                    console.log('✅ Users loaded:', users.length);
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        // Render users
+        function renderUsers() {
+            const container = document.getElementById('allUsers');
+            if (!container) return;
+
+            if (users.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">📋 Még nincs felhasználó.</p>';
+                return;
+            }
+
+            const isAdmin = currentUser && currentUser.role === 'admin';
+
+            const userHTML = users.map(user => {
+                // Generate avatar color based on user ID
+                const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe', '#43e97b', '#fa709a'];
+                const avatarColor = colors[user.id % colors.length];
+                const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+
+                return `
+                    <div class="user-card">
+                        <div class="user-avatar" style="background: ${avatarColor}">
+                            ${user.avatar_url ?
+                                `<img src="${user.avatar_url}" alt="${user.name}">` :
+                                initials
+                            }
+                        </div>
+                        <div class="user-info-section">
+                            <div class="user-name">${user.name}</div>
+                            <div class="user-email">${user.email}</div>
+                            <div class="user-meta">
+                                <span class="role-badge role-${user.role}">
+                                    ${user.role === 'admin' ? '👑 Admin' : '👤 User'}
+                                </span>
+                                <span style="color: #999; font-size: 0.85em;">
+                                    Frissítve: ${new Date(user.updated_at).toLocaleDateString('hu-HU')}
+                                </span>
+                            </div>
+                        </div>
+                        ${isAdmin ? `
+                            <div class="user-actions">
+                                <button class="btn btn-sm" onclick="editUser(${user.id})" style="padding: 8px 16px;">
+                                    ✏️ Szerkesztés
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = userHTML;
+        }
+
+        // Show user edit modal
+        function editUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            const modalHTML = `
+                <div class="modal-overlay" onclick="closeUserEditModal(event)">
+                    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
+                        <div class="modal-header">
+                            <h2 style="margin: 0; font-size: 1.8em;">✏️ Felhasználó szerkesztése</h2>
+                            <button class="modal-close" onclick="closeUserEditModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="userEditForm" onsubmit="saveUserEdit(event, ${userId})">
+                                <div class="form-group">
+                                    <label>Név *</label>
+                                    <input type="text" id="editUserName" value="${user.name}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Email *</label>
+                                    <input type="email" id="editUserEmail" value="${user.email}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Szerepkör *</label>
+                                    <select id="editUserRole" required>
+                                        <option value="user" ${user.role === 'user' ? 'selected' : ''}>👤 User</option>
+                                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>👑 Admin</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Avatar URL (opcionális)</label>
+                                    <input type="url" id="editUserAvatar" value="${user.avatar_url || ''}" placeholder="https://example.com/avatar.jpg">
+                                    <small style="color: #999; font-size: 0.85em; display: block; margin-top: 5px;">
+                                        Ha üresen hagyod, színes iniciálé kör jelenik meg
+                                    </small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="editUserChangePassword" onchange="togglePasswordField()">
+                                        Jelszó módosítása
+                                    </label>
+                                </div>
+
+                                <div class="form-group" id="passwordFieldContainer" style="display: none;">
+                                    <label>Új jelszó *</label>
+                                    <input type="password" id="editUserPassword" minlength="6" placeholder="Minimum 6 karakter">
+                                </div>
+
+                                <div class="form-group" id="passwordConfirmContainer" style="display: none;">
+                                    <label>Jelszó megerősítése *</label>
+                                    <input type="password" id="editUserPasswordConfirm" minlength="6" placeholder="Add meg újra a jelszót">
+                                </div>
+
+                                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                                    <button type="submit" class="btn" style="flex: 1;">💾 Mentés</button>
+                                    <button type="button" class="btn btn-secondary" onclick="closeUserEditModal()" style="flex: 1;">❌ Mégse</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modalContainer = document.createElement('div');
+            modalContainer.id = 'userEditModal';
+            modalContainer.innerHTML = modalHTML;
+            document.body.appendChild(modalContainer);
+        }
+
+        // Toggle password field visibility
+        function togglePasswordField() {
+            const checkbox = document.getElementById('editUserChangePassword');
+            const container = document.getElementById('passwordFieldContainer');
+            const confirmContainer = document.getElementById('passwordConfirmContainer');
+            const passwordInput = document.getElementById('editUserPassword');
+            const confirmInput = document.getElementById('editUserPasswordConfirm');
+
+            if (checkbox.checked) {
+                container.style.display = 'block';
+                confirmContainer.style.display = 'block';
+                passwordInput.required = true;
+                confirmInput.required = true;
+            } else {
+                container.style.display = 'none';
+                confirmContainer.style.display = 'none';
+                passwordInput.required = false;
+                confirmInput.required = false;
+                passwordInput.value = '';
+                confirmInput.value = '';
+            }
+        }
+
+        // Close user edit modal
+        function closeUserEditModal(event) {
+            if (event && event.target.className !== 'modal-overlay') return;
+            const modal = document.getElementById('userEditModal');
+            if (modal) modal.remove();
+        }
+
+        // Save user edit
+        async function saveUserEdit(event, userId) {
+            event.preventDefault();
+
+            const name = document.getElementById('editUserName').value;
+            const email = document.getElementById('editUserEmail').value;
+            const role = document.getElementById('editUserRole').value;
+            const avatarUrl = document.getElementById('editUserAvatar').value;
+            const changePassword = document.getElementById('editUserChangePassword').checked;
+            const password = document.getElementById('editUserPassword').value;
+            const passwordConfirm = document.getElementById('editUserPasswordConfirm').value;
+
+            // Validate password match
+            if (changePassword) {
+                if (password !== passwordConfirm) {
+                    showNotification('❌ A két jelszó nem egyezik!');
+                    return;
+                }
+                if (password.length < 6) {
+                    showNotification('❌ A jelszónak legalább 6 karakter hosszúnak kell lennie!');
+                    return;
+                }
+            }
+
+            try {
+                const updateData = { name, email, role };
+                if (avatarUrl) updateData.avatar_url = avatarUrl;
+                if (changePassword && password) updateData.password = password;
+
+                const response = await fetch(`${API_URL}/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('✅ Felhasználó sikeresen frissítve!');
+                    await loadUsers();
+                    renderUsers();
+                    closeUserEditModal();
+                } else {
+                    showNotification('❌ ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error updating user:', error);
+                showNotification('❌ Hiba történt a mentés során!');
+            }
+        }
+
+        // Export to CSV
+        function exportToCSV(data, filename) {
+            if (!data || data.length === 0) {
+                showNotification('❌ Nincs exportálható adat!');
+                return;
+            }
+
+            // Get headers from first object
+            const headers = Object.keys(data[0]);
+
+            // Create CSV content
+            let csv = headers.join(',') + '\n';
+
+            data.forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header] || '';
+                    // Escape commas and quotes
+                    return typeof value === 'string' && (value.includes(',') || value.includes('"'))
+                        ? `"${value.replace(/"/g, '""')}"`
+                        : value;
+                });
+                csv += values.join(',') + '\n';
+            });
+
+            // Download file
+            downloadFile(csv, filename, 'text/csv');
+            showNotification('✅ CSV export sikeres!');
+        }
+
+        // Export to JSON
+        function exportToJSON(data, filename) {
+            if (!data) {
+                showNotification('❌ Nincs exportálható adat!');
+                return;
+            }
+
+            const json = JSON.stringify(data, null, 2);
+            downloadFile(json, filename, 'application/json');
+            showNotification('✅ JSON export sikeres!');
+        }
+
+        // Download file helper
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Export projects
+        function exportProjects(format) {
+            const timestamp = new Date().toISOString().split('T')[0];
+
+            if (format === 'csv') {
+                const csvData = projects.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    description: p.description,
+                    start_date: p.start_date,
+                    end_date: p.end_date,
+                    owner_name: p.owner_name,
+                    status: p.status,
+                    color: p.color
+                }));
+                exportToCSV(csvData, `projektek-${timestamp}.csv`);
+            } else if (format === 'json') {
+                exportToJSON(projects, `projektek-${timestamp}.json`);
+            }
+        }
+
+        // Export tasks
+        function exportTasks(format) {
+            const timestamp = new Date().toISOString().split('T')[0];
+
+            if (format === 'csv') {
+                const csvData = tasks.map(t => ({
+                    id: t.id,
+                    project_name: t.project_name,
+                    name: t.name,
+                    description: t.description,
+                    start_date: t.start_date,
+                    deadline: t.deadline,
+                    owner_name: t.owner_name,
+                    status: t.status,
+                    priority: t.priority
+                }));
+                exportToCSV(csvData, `feladatok-${timestamp}.csv`);
+            } else if (format === 'json') {
+                exportToJSON(tasks, `feladatok-${timestamp}.json`);
+            }
+        }
+
+        // Export all data (backup)
+        function exportAllData() {
+            const timestamp = new Date().toISOString().split('T')[0];
+            const backup = {
+                exported_at: new Date().toISOString(),
+                version: '1.0',
+                projects: projects,
+                tasks: tasks
+            };
+            exportToJSON(backup, `teljes-mentes-${timestamp}.json`);
+        }
+
+        // Import JSON data
+        async function importData(file) {
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+
+                // Validate data structure
+                if (!data.projects || !Array.isArray(data.projects)) {
+                    showNotification('❌ Hibás fájl formátum! Hiányzik a "projects" tömb.');
+                    return;
+                }
+
+                if (confirm(`Biztos vagy benne? Ez ${data.projects.length} projektet és ${data.tasks?.length || 0} feladatot fog importálni. A meglévő adatok NEM lesznek törölve.`)) {
+                    // Import projects
+                    for (const project of data.projects) {
+                        try {
+                            await fetch(`${API_URL}/projects`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${authToken}`
+                                },
+                                body: JSON.stringify(project)
+                            });
+                        } catch (err) {
+                            console.error('Error importing project:', err);
+                        }
+                    }
+
+                    // Import tasks if present
+                    if (data.tasks && Array.isArray(data.tasks)) {
+                        for (const task of data.tasks) {
+                            try {
+                                await fetch(`${API_URL}/tasks`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${authToken}`
+                                    },
+                                    body: JSON.stringify(task)
+                                });
+                            } catch (err) {
+                                console.error('Error importing task:', err);
+                            }
+                        }
+                    }
+
+                    showNotification('✅ Import sikeres! Adatok betöltve.');
+                    await loadData();
+                }
+            } catch (error) {
+                console.error('Import error:', error);
+                showNotification('❌ Import hiba: ' + error.message);
+            }
+        }
+
+        // Show import modal
+        function showImportModal() {
+            const modalHTML = `
+                <div class="modal-overlay" onclick="closeImportModal(event)">
+                    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h2 style="margin: 0; font-size: 1.8em;">📥 Adatok importálása</h2>
+                            <button class="modal-close" onclick="closeImportModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <p style="margin-bottom: 20px; color: #666;">
+                                Válassz egy JSON fájlt az adatok importálásához.
+                                A fájlnak tartalmaznia kell a "projects" és opcionálisan a "tasks" tömböt.
+                            </p>
+
+                            <div class="form-group">
+                                <label>JSON fájl *</label>
+                                <input type="file" id="importFileInput" accept=".json"
+                                    style="padding: 10px; border: 2px dashed #667eea; border-radius: 10px; width: 100%;">
+                            </div>
+
+                            <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 15px; margin-top: 20px;">
+                                <strong>⚠️ Figyelem:</strong> Az importálás NEM törli a meglévő adatokat,
+                                hanem hozzáadja az újakat a rendszerhez.
+                            </div>
+
+                            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                                <button class="btn" onclick="handleImport()" style="flex: 1;">📥 Import</button>
+                                <button class="btn btn-secondary" onclick="closeImportModal()" style="flex: 1;">❌ Mégse</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modalContainer = document.createElement('div');
+            modalContainer.id = 'importModal';
+            modalContainer.innerHTML = modalHTML;
+            document.body.appendChild(modalContainer);
+        }
+
+        // Handle import
+        async function handleImport() {
+            const fileInput = document.getElementById('importFileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showNotification('❌ Kérlek válassz egy fájlt!');
+                return;
+            }
+
+            if (!file.name.endsWith('.json')) {
+                showNotification('❌ Csak JSON fájl importálható!');
+                return;
+            }
+
+            await importData(file);
+            closeImportModal();
+        }
+
+        // Close import modal
+        function closeImportModal(event) {
+            if (event && event.target.className !== 'modal-overlay') return;
+            const modal = document.getElementById('importModal');
+            if (modal) modal.remove();
         }
 
         // Update project select dropdowns

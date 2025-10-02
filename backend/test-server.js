@@ -190,6 +190,86 @@ app.delete('/api/projects/:id', authMiddleware, (req, res) => {
   res.json({ success: true, message: 'Project deleted' });
 });
 
+// User routes
+app.get('/api/users', authMiddleware, (req, res) => {
+  // Return users without password_hash
+  const safeUsers = users.map(u => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    avatar_url: u.avatar_url || null,
+    created_at: u.created_at || '2025-01-01T00:00:00Z',
+    updated_at: u.updated_at || new Date().toISOString()
+  }));
+  res.json({ success: true, data: safeUsers });
+});
+
+app.get('/api/users/:id', authMiddleware, (req, res) => {
+  const user = users.find(u => u.id === parseInt(req.params.id));
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar_url: user.avatar_url || null,
+      created_at: user.created_at || '2025-01-01T00:00:00Z',
+      updated_at: user.updated_at || new Date().toISOString()
+    }
+  });
+});
+
+app.put('/api/users/:id', authMiddleware, async (req, res) => {
+  // Only admins can update users
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Admin access required' });
+  }
+
+  const userIndex = users.findIndex(u => u.id === parseInt(req.params.id));
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
+  const { name, email, role, avatar_url, password } = req.body;
+
+  // Check if email is already taken by another user
+  if (email && email !== users[userIndex].email) {
+    const emailExists = users.find(u => u.email === email && u.id !== parseInt(req.params.id));
+    if (emailExists) {
+      return res.status(400).json({ success: false, message: 'Email already in use' });
+    }
+  }
+
+  // Update user fields
+  if (name) users[userIndex].name = name;
+  if (email) users[userIndex].email = email;
+  if (role) users[userIndex].role = role;
+  if (avatar_url !== undefined) users[userIndex].avatar_url = avatar_url;
+  if (password) {
+    users[userIndex].password_hash = await bcrypt.hash(password, 10);
+  }
+  users[userIndex].updated_at = new Date().toISOString();
+
+  const updatedUser = {
+    id: users[userIndex].id,
+    name: users[userIndex].name,
+    email: users[userIndex].email,
+    role: users[userIndex].role,
+    avatar_url: users[userIndex].avatar_url || null,
+    updated_at: users[userIndex].updated_at
+  };
+
+  io.emit('user:updated', updatedUser);
+
+  res.json({ success: true, message: 'User updated', data: updatedUser });
+});
+
 // Task routes
 app.get('/api/tasks', authMiddleware, (req, res) => {
   res.json({ success: true, data: tasks });

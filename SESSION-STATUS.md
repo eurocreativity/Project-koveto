@@ -1,7 +1,7 @@
 # 📊 Projekt Követő Rendszer - Fejlesztési Állapot
 
-**Utolsó frissítés:** 2025-10-01
-**Státusz:** Backend + Frontend MVP kész + Task CRUD + Project Edit/Delete + Project Details Modal ✅
+**Utolsó frissítés:** 2025-10-02
+**Státusz:** Backend + Frontend MVP kész + Task CRUD + Project Edit/Delete + Project Details Modal + User Management ✅
 
 ---
 
@@ -50,6 +50,10 @@ POST   /api/tasks
 PUT    /api/tasks/:id
 DELETE /api/tasks/:id
 
+GET    /api/users
+GET    /api/users/:id
+PUT    /api/users/:id
+
 GET    /api/health
 ```
 
@@ -62,6 +66,7 @@ socket.on('project:deleted', ({ id }) => {})
 socket.on('task:created', (task) => {})
 socket.on('task:updated', (task) => {})
 socket.on('task:deleted', ({ id }) => {})
+socket.on('user:updated', (user) => {})
 socket.on('user:online', ({ userId }) => {})
 socket.on('user:offline', ({ socketId }) => {})
 ```
@@ -69,7 +74,9 @@ socket.on('user:offline', ({ socketId }) => {})
 #### Tesztelés:
 - ✅ **20 REST API teszt** (`api-tests.spec.js`) - 100% PASSED
 - ✅ **8 Socket.IO teszt** (`socket-tests.spec.js`) - 100% PASSED
+- ✅ **10 User Management teszt** (`user-tests.spec.js`) - 100% PASSED
 - ✅ Playwright használatával tesztelve
+- ✅ **Összes teszt:** 38/38 PASSED ✅
 
 ---
 
@@ -104,6 +111,27 @@ socket.on('user:offline', ({ socketId }) => {})
   - Új task létrehozása
   - Task szerkesztés/törlés
   - Real-time task frissítések
+
+- ✅ **User Management UI** (2025-10-02 elkészült)
+  - 👥 Felhasználók tab
+  - User lista megjelenítés
+  - Avatar-ok (színes iniciálé körök vagy kép URL)
+  - Szerepkör badge-ek (Admin/User)
+  - **User szerkesztés modal** (glassmorphism design)
+    - Jól pozicionált modal (felső padding, scroll support)
+    - Név, email módosítás
+    - Szerepkör váltás (User/Admin)
+    - Avatar URL beállítás
+    - Jelszó változtatás (opcionális checkbox)
+    - **Jelszó megerősítés mező** (dupla ellenőrzés)
+    - Form validáció:
+      - Email format ellenőrzés
+      - Jelszó min. 6 karakter
+      - **Jelszó egyezőség ellenőrzés**
+      - Hibás jelszó egyezés esetén hibaüzenet
+    - Mentés/Mégse gombok
+  - Real-time user frissítések (Socket.IO)
+  - Admin jogosultság ellenőrzés
 
 - ✅ **FullCalendar integráció**
   - Havi/heti/lista nézet
@@ -169,6 +197,13 @@ npx playwright test socket-tests.spec.js --reporter=list
 ```
 **Eredmény:** 8/8 PASSED ✅ (772ms)
 
+### User Management tesztek (Playwright)
+```bash
+cd "f:\AI\Project koveto\backend"
+npx playwright test user-tests.spec.js --reporter=list
+```
+**Eredmény:** 10/10 PASSED ✅ (888ms)
+
 ---
 
 ## 📝 Demo felhasználók (Mock API)
@@ -187,7 +222,7 @@ npx playwright test socket-tests.spec.js --reporter=list
 - [x] Task CRUD űrlapok frontend-en ✅ (2025-10-01 elkészült)
 - [x] Projekt szerkesztés/törlés UI ✅ (2025-10-01 elkészült)
 - [x] Projekt részletek modal ✅ (2025-10-01 elkészült)
-- [ ] User management UI
+- [x] User management UI ✅ (2025-10-02 elkészült)
 - [ ] Export/Import funkciók
 - [ ] Dark mode
 - [ ] Email értesítések
@@ -238,6 +273,7 @@ f:\AI\Project koveto/
 │   ├── test-server.js
 │   ├── api-tests.spec.js
 │   ├── socket-tests.spec.js
+│   ├── user-tests.spec.js
 │   ├── schema.sql
 │   ├── ecosystem.config.js
 │   ├── package.json
@@ -246,7 +282,7 @@ f:\AI\Project koveto/
 │   ├── .gitignore
 │   └── README.md
 ├── frontend/
-│   ├── index.html (~65KB, Task CRUD + Project Edit/Delete + Details Modal)
+│   ├── index.html (~75KB, Task CRUD + Project Edit/Delete + Details Modal + User Management + Edit Modal)
 │   ├── index-backup.html (original MVP)
 │   ├── index-before-patch-remove.html (backup)
 │   └── index-before-modal.html (backup before modal)
@@ -291,8 +327,9 @@ f:\AI\Project koveto/
 
 - REST API átlagos válaszidő: ~40ms
 - Socket.IO broadcast latency: <10ms
-- Frontend méret: ~65KB (single HTML with Task CRUD + Details Modal)
+- Frontend méret: ~75KB (single HTML with Task CRUD + Details Modal + User Management + Edit Modal)
 - Backend dependencies: 201 packages
+- Tesztek futási ideje: ~888ms (38 teszt)
 
 ---
 
@@ -351,7 +388,6 @@ http://localhost:8000
 ## 🐛 Ismert problémák
 
 - [ ] MySQL nincs telepítve (mock server-t használunk)
-- [ ] User lista lekérdezés endpoint nincs használva frontend-en
 
 ---
 
@@ -359,10 +395,10 @@ http://localhost:8000
 
 1. ✅ Backend architektúra megtervezve
 2. ✅ MySQL adatbázis séma létrehozva
-3. ✅ REST API komplett (auth, projects, tasks)
+3. ✅ REST API komplett (auth, projects, tasks, users)
 4. ✅ Socket.IO real-time implementálva
 5. ✅ JWT authentikáció működik
-6. ✅ 28 automatikus teszt (mind PASSED)
+6. ✅ 38 automatikus teszt (mind PASSED)
 7. ✅ Frontend MVP elkészült
 8. ✅ FullCalendar integráció
 9. ✅ Real-time sync 2 kliens között működik
@@ -370,9 +406,10 @@ http://localhost:8000
 11. ✅ Task CRUD UI komplett (lista, szűrés, CRUD)
 12. ✅ Project Edit/Delete funkciók működnek
 13. ✅ Project Details Modal (részletes projekt nézet)
+14. ✅ User Management UI (avatar, role, szerkesztés, real-time)
 
 ---
 
-**Projekt készültség:** 85% (MVP + Task CRUD + Project Edit/Delete + Details Modal kész, haladó funkciók fejlesztés alatt)
+**Projekt készültség:** 90% (MVP + Task CRUD + Project Edit/Delete + Details Modal + User Management kész, haladó funkciók fejlesztés alatt)
 
 **Következő session indulhat innen!** 🚀
