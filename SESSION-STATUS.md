@@ -1,7 +1,7 @@
 # 📊 Projekt Követő Rendszer - Fejlesztési Állapot
 
 **Utolsó frissítés:** 2025-10-02
-**Státusz:** Backend + Frontend MVP kész + Task CRUD + Project Edit/Delete + Project Details Modal + User Management ✅
+**Státusz:** Production Backend MySQL-lel + Frontend MVP + Összes API endpoint kész + MySQL integráció ✅
 
 ---
 
@@ -836,3 +836,170 @@ docker run -d \
 ---
 
 **Következő session indulhat innen!** 🚀
+
+---
+
+## 🗄️ MySQL Integráció (2025-10-02 Elkészült)
+
+### XAMPP MySQL Setup
+- ✅ **Database**: project_tracker
+- ✅ **User**: project_user / project_pass123
+- ✅ **MariaDB Version**: 10.4.32
+- ✅ **Port**: 3306
+- ✅ **Schema imported**: users, projects, tasks, settings
+- ✅ **Demo data**: 3 users, 3 projects, 9 tasks
+
+### Production Backend Kiegészítések (src/)
+
+**Új fájlok:**
+- ✅ `src/controllers/userController.js` (5.2 KB)
+  - getAllUsers() - GET /api/users
+  - getUserById() - GET /api/users/:id
+  - updateUser() - PUT /api/users/:id (admin only)
+  - deleteUser() - DELETE /api/users/:id (admin only)
+
+- ✅ `src/routes/users.js` (495 bytes)
+  - User route definitions
+  - Auth middleware protection
+
+- ✅ `src/routes/calendar.js` (367 bytes)
+  - Calendar route definition
+  - GET /api/calendar/events
+
+**Frissített fájlok:**
+- ✅ `src/controllers/projectController.js`
+  - getCalendarEvents() függvény hozzáadva
+  - FullCalendar kompatibilis JSON formátum
+  - Projektek + feladatok egyesítése
+  - Színkódolás prioritás/státusz szerint
+
+- ✅ `src/server.js`
+  - app.use('/api/users', userRoutes)
+  - app.use('/api/calendar', calendarRoutes)
+
+- ✅ `.env`
+  - DB_USER=project_user
+  - DB_PASSWORD=project_pass123
+
+### Teljes API végpontok (Production)
+
+```
+# Auth
+POST   /api/auth/register
+POST   /api/auth/login
+GET    /api/auth/me
+POST   /api/auth/logout
+
+# Projects
+GET    /api/projects
+GET    /api/projects/:id
+POST   /api/projects
+PUT    /api/projects/:id
+DELETE /api/projects/:id
+
+# Tasks
+GET    /api/tasks
+GET    /api/tasks/:id
+POST   /api/tasks
+PUT    /api/tasks/:id
+DELETE /api/tasks/:id
+
+# Users (ÚJ)
+GET    /api/users           - Összes felhasználó
+GET    /api/users/:id       - Egy felhasználó
+PUT    /api/users/:id       - Felhasználó módosítása (admin)
+DELETE /api/users/:id       - Felhasználó törlése (admin)
+
+# Calendar (ÚJ)
+GET    /api/calendar/events - FullCalendar események
+
+# Health
+GET    /api/health
+```
+
+### Frontend + Backend Integráció Tesztelve
+
+**Automatikus Playwright tesztek:**
+- ✅ Login működik
+- ✅ Dashboard betöltődik
+- ✅ User Management UI működik
+- ✅ Project/Task CRUD működik
+- ✅ Socket.IO kapcsolat működik
+- ✅ Dark Mode működik
+- ✅ Export/Import működik
+
+### Újraindítási útmutató (FRISSÍTVE)
+
+#### 1. Production Backend indítása (MySQL-lel)
+```bash
+cd "f:\AI\Project koveto\backend"
+node src/server.js
+```
+
+**Kimenet:**
+```
+✅ MySQL database connected successfully
+==================================================
+🚀 Project Tracker API Server
+==================================================
+📡 Server running on port 3001
+🌍 Environment: development
+🔗 API URL: http://localhost:3001/api
+💾 Database: project_tracker
+⚡ Socket.IO: Enabled
+==================================================
+```
+
+#### 2. Frontend indítása
+```bash
+cd "f:\AI\Project koveto\frontend"
+python -m http.server 8000
+```
+
+#### 3. Tesztelés
+- **Frontend**: http://localhost:8000
+- **Backend API Health**: http://localhost:3001/api/health
+- **Login**: admin@example.com / password123
+
+---
+
+## 📊 Projekt Készültség Frissítve
+
+**Előző:** 97% (MVP + Task CRUD + Project Edit/Delete + Details Modal + User Management + Export/Import + Dark Mode kész)
+
+**Jelenlegi:** **98%** (Production Backend MySQL-lel + Összes API endpoint + Frontend integráció tesztelve)
+
+---
+
+## 🔮 Következő Lépések (Prioritás sorrendben)
+
+### 1. FÁZIS 4 - ISPConfig Deployment (1-2 nap)
+- [ ] ISPConfig webhely létrehozása
+- [ ] Node.js + PM2 konfiguráció szerveren
+- [ ] MySQL adatbázis létrehozása éles környezetben
+- [ ] Nginx reverse proxy beállítása
+- [ ] SSL tanúsítvány (Let's Encrypt)
+- [ ] Backend + Frontend feltöltése
+- [ ] Éles tesztelés
+
+### 2. FÁZIS 5 - Nextcloud CalDAV Integráció (1-2 hét)
+- [ ] Nextcloud kapcsolat beállítás (Settings UI)
+- [ ] CalDAV kliens integráció (backend)
+- [ ] Feladat szinkronizáció (lokális → Nextcloud)
+- [ ] Import Nextcloud-ból (Nextcloud → lokális)
+- [ ] Konfliktus kezelés
+- [ ] Automatikus szinkronizáció
+
+### 3. FÁZIS 6 - További Funkciók
+- [ ] Email értesítések (Nodemailer)
+- [ ] Drag & Drop naptárban (FullCalendar)
+- [ ] Fejlett szűrők és keresés
+- [ ] E2E Playwright tesztek frontend-re
+- [ ] Load testing
+- [ ] Security audit
+
+---
+
+**Session lezárva:** 2025-10-02 20:00  
+**Következő session:** ISPConfig Deployment vagy Nextcloud Integráció 🚀
+

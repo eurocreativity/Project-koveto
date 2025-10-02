@@ -266,10 +266,118 @@ async function deleteProject(req, res) {
   }
 }
 
+/**
+ * Get calendar events (projects + tasks in FullCalendar format)
+ * GET /api/calendar/events
+ */
+async function getCalendarEvents(req, res) {
+  try {
+    const events = [];
+
+    // Get all projects
+    const [projects] = await pool.query(
+      `SELECT
+        p.id,
+        p.name,
+        p.start_date,
+        p.end_date,
+        p.color,
+        p.status,
+        u.name as owner_name
+      FROM projects p
+      LEFT JOIN users u ON p.owner_id = u.id
+      ORDER BY p.start_date ASC`
+    );
+
+    // Add projects as events
+    projects.forEach(project => {
+      events.push({
+        id: `project-${project.id}`,
+        title: `📁 ${project.name}`,
+        start: project.start_date,
+        end: project.end_date,
+        backgroundColor: project.color || '#667eea',
+        borderColor: project.color || '#667eea',
+        extendedProps: {
+          type: 'project',
+          projectId: project.id,
+          status: project.status,
+          owner: project.owner_name
+        }
+      });
+    });
+
+    // Get all tasks
+    const [tasks] = await pool.query(
+      `SELECT
+        t.id,
+        t.name,
+        t.start_date,
+        t.deadline,
+        t.status,
+        t.priority,
+        p.name as project_name,
+        p.color as project_color,
+        u.name as owner_name
+      FROM tasks t
+      LEFT JOIN projects p ON t.project_id = p.id
+      LEFT JOIN users u ON t.owner_id = u.id
+      ORDER BY t.deadline ASC`
+    );
+
+    // Add tasks as events
+    tasks.forEach(task => {
+      // Determine task color based on priority
+      let taskColor = task.project_color || '#667eea';
+      if (task.priority === 'high') {
+        taskColor = '#ef4444'; // Red
+      } else if (task.priority === 'medium') {
+        taskColor = '#f59e0b'; // Orange
+      } else if (task.priority === 'low') {
+        taskColor = '#10b981'; // Green
+      }
+
+      // Task icon based on status
+      let icon = '📋';
+      if (task.status === 'completed') icon = '✅';
+      else if (task.status === 'in_progress') icon = '🔄';
+
+      events.push({
+        id: `task-${task.id}`,
+        title: `${icon} ${task.name}`,
+        start: task.start_date || task.deadline,
+        end: task.deadline,
+        backgroundColor: taskColor,
+        borderColor: taskColor,
+        extendedProps: {
+          type: 'task',
+          taskId: task.id,
+          projectName: task.project_name,
+          status: task.status,
+          priority: task.priority,
+          owner: task.owner_name
+        }
+      });
+    });
+
+    res.json({
+      success: true,
+      data: events
+    });
+  } catch (error) {
+    console.error('Get calendar events error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch calendar events'
+    });
+  }
+}
+
 module.exports = {
   getAllProjects,
   getProjectById,
   createProject,
   updateProject,
-  deleteProject
+  deleteProject,
+  getCalendarEvents
 };
