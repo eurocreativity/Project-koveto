@@ -171,6 +171,36 @@ socket.on('user:offline', ({ socketId }) => {})
     - Blob API használat a fájlletöltésekhez
     - FileReader API az import-hoz
 
+- ✅ **Dark Mode** (2025-10-02 elkészült)
+  - 🌙 **Theme Toggle**
+    - Toggle gomb a header-ben (🌙/☀️ ikonok)
+    - Körkörös animáció hover-nél
+    - Smooth icon swap
+  - 🎨 **CSS Variables Theming:**
+    - `:root` változók a light mode-hoz
+    - `body.dark-mode` változók a dark mode-hoz
+    - Background gradients:
+      - Light: Purple-violet (#667eea → #764ba2 → #f093fb)
+      - Dark: Navy (#1a1a2e → #16213e → #0f3460)
+    - Card colors, text colors, shadows
+  - 💾 **localStorage Persistence:**
+    - `darkMode: enabled/disabled` kulcs
+    - Automatikus betöltés page load-nál
+    - Rendszer preferencia detektálás (matchMedia)
+  - ✨ **Smooth Transitions:**
+    - 0.3s ease transitions minden változásnál
+    - Background, colors, borders animált váltás
+  - 🔔 **User Feedback:**
+    - Notification: "🌙 Sötét mód bekapcsolva"
+    - Notification: "☀️ Világos mód bekapcsolva"
+  - 📦 **Komponensek frissítve:**
+    - Header, tabs, content cards
+    - Auth screens, forms, inputs
+    - Modals, notifications
+    - Project/task kártyák
+    - User management UI
+    - Settings oldal
+
 - ✅ **FullCalendar integráció**
   - Havi/heti/lista nézet
   - Projektek és feladatok megjelenítése
@@ -262,7 +292,7 @@ npx playwright test user-tests.spec.js --reporter=list
 - [x] Projekt részletek modal ✅ (2025-10-01 elkészült)
 - [x] User management UI ✅ (2025-10-02 elkészült)
 - [x] Export/Import funkciók ✅ (2025-10-02 elkészült)
-- [ ] Dark mode
+- [x] Dark mode ✅ (2025-10-02 elkészült)
 - [ ] Email értesítések
 
 ### Deployment:
@@ -446,9 +476,10 @@ http://localhost:8000
 13. ✅ Project Details Modal (részletes projekt nézet)
 14. ✅ User Management UI (avatar, role, szerkesztés, real-time)
 15. ✅ Export/Import funkciók (CSV, JSON, Full Backup, Import modal)
+16. ✅ Dark Mode (CSS variables, toggle, localStorage, transitions)
 
 ---
 
-**Projekt készültség:** 95% (MVP + Task CRUD + Project Edit/Delete + Details Modal + User Management + Export/Import kész, haladó funkciók fejlesztés alatt)
+**Projekt készültség:** 97% (MVP + Task CRUD + Project Edit/Delete + Details Modal + User Management + Export/Import + Dark Mode kész)
 
 **Következő session indulhat innen!** 🚀
