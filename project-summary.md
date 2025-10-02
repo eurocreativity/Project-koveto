@@ -933,10 +933,11 @@ chown web1:client1 -R .
 - ✅ Project Details Modal - 2025-10-01
 - ✅ User Management UI - 2025-10-02
 - ✅ Export/Import (JSON, CSV, Full Backup) - 2025-10-02
+- ✅ Dark mode - 2025-10-02
+- [ ] **Nextcloud Naptár Integráció (CalDAV)** - Tervezett (lásd részletek 6.6)
 - [ ] Drag & drop naptárban (FullCalendar)
 - [ ] Fejlett szűrők és keresés
 - [ ] Email értesítések (Nodemailer)
-- [ ] Dark mode
 
 ### 6. FÁZIS – Tesztelés és optimalizálás (2-3 nap)
 - Böngésző kompatibilitás teszt

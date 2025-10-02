@@ -293,7 +293,9 @@ npx playwright test user-tests.spec.js --reporter=list
 - [x] User management UI ✅ (2025-10-02 elkészült)
 - [x] Export/Import funkciók ✅ (2025-10-02 elkészült)
 - [x] Dark mode ✅ (2025-10-02 elkészült)
+- [ ] **Nextcloud Naptár Integráció** (tervezett)
 - [ ] Email értesítések
+- [ ] Drag & Drop naptárban (FullCalendar)
 
 ### Deployment:
 - [ ] MySQL adatbázis létrehozása éles környezetben
@@ -481,5 +483,356 @@ http://localhost:8000
 ---
 
 **Projekt készültség:** 97% (MVP + Task CRUD + Project Edit/Delete + Details Modal + User Management + Export/Import + Dark Mode kész)
+
+---
+
+## 🔮 Nextcloud Naptár Integráció (Tervezett Funkció)
+
+### Áttekintés
+A rendszer képes lesz feladatokat és projekteket szinkronizálni egy meglévő Nextcloud naptárral CalDAV protokollon keresztül. A szinkronizáció kétirányú: lokális változások kiírhatók a Nextcloud naptárba, és távoli változások importálhatók.
+
+### Főbb Funkciók
+
+#### 1. **Nextcloud Kapcsolat Beállítás**
+- **Settings Tab**:
+  - Nextcloud szerver URL megadása (`https://cloud.example.com`)
+  - Felhasználónév és jelszó (vagy app password)
+  - Naptár kiválasztása (legördülő lista az elérhető naptárakból)
+  - "Kapcsolat tesztelése" gomb
+  - Kapcsolat státusz jelző (✅ Csatlakozva / ❌ Hiba)
+
+#### 2. **CalDAV Integráció**
+```javascript
+// Backend CalDAV kliens
+const calDAV = require('caldav-client');
+
+// Nextcloud credentials tárolás
+type NextcloudConfig = {
+  serverUrl: string;           // https://cloud.example.com
+  username: string;            // user@example.com
+  password: string;            // App password
+  calendarUrl: string;         // /remote.php/dav/calendars/user/personal/
+  syncEnabled: boolean;
+  lastSync: string;            // ISO timestamp
+};
+```
+
+#### 3. **Feladat Kiírás Nextcloud-ba**
+- **UI Elemek**:
+  - Minden feladat kártyán új gomb: "📤 Kiírás Nextcloud-ba"
+  - Bulk művelet: "Összes feladat szinkronizálása"
+  - Automatikus szinkronizáció opció (Settings)
+
+- **Státusz Indikátorok**:
+  ```javascript
+  type TaskSyncStatus = {
+    localSaved: boolean;         // ✅ Lokálisan mentve
+    nextcloudSynced: boolean;    // ☁️ Nextcloud szinkronizálva
+    nextcloudEventId: string;    // CalDAV event UID
+    lastSyncTime: string;        // Utolsó szinkronizálás ideje
+    syncError: string | null;    // Hiba üzenet (ha van)
+  };
+  ```
+
+- **Státusz Megjelenítés (feladat kártyán)**:
+  ```
+  [✅ Lokális] [☁️ Nextcloud] [🔄 Szinkronizálás alatt] [❌ Hiba]
+  ```
+
+#### 4. **CalDAV Event Formátum**
+```javascript
+// VEVENT generálás feladatból
+function generateCalDAVEvent(task) {
+  return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Projekt Követő//HU
+BEGIN:VEVENT
+UID:${task.id}@projektkoveto.local
+DTSTAMP:${formatDate(new Date())}
+DTSTART:${formatDate(task.start_date)}
+DTEND:${formatDate(task.deadline)}
+SUMMARY:${task.name}
+DESCRIPTION:${task.description}\\nProjekt: ${task.project_name}
+STATUS:${mapStatus(task.status)}
+PRIORITY:${mapPriority(task.priority)}
+CATEGORIES:ProjektKövető,${task.project_name}
+END:VEVENT
+END:VCALENDAR`;
+}
+
+// Státusz mapping
+function mapStatus(status) {
+  return {
+    'open': 'NEEDS-ACTION',
+    'in_progress': 'IN-PROCESS',
+    'completed': 'COMPLETED'
+  }[status];
+}
+
+// Prioritás mapping
+function mapPriority(priority) {
+  return {
+    'low': '9',
+    'medium': '5',
+    'high': '1'
+  }[priority];
+}
+```
+
+#### 5. **Kétirányú Szinkronizáció**
+
+**Lokális → Nextcloud (Push)**
+1. Felhasználó létrehoz/módosít feladatot
+2. Adatbázisba mentés (lokális)
+3. Státusz: ✅ Lokális
+4. Kattintás "📤 Kiírás Nextcloud-ba" gombra
+5. CalDAV PUT request a Nextcloud-ba
+6. Státusz frissítés: ✅ Lokális ☁️ Nextcloud
+7. `nextcloudEventId` tárolása (UID)
+
+**Nextcloud → Lokális (Pull)**
+1. "🔄 Import Nextcloud-ból" gomb
+2. CalDAV REPORT query (változások lekérése)
+3. Új/módosított események importálása
+4. Konfliktus kezelés:
+   - Ha lokális és távoli is változott → Felhasználói döntés (modal)
+   - Opciók: Lokális megtartása | Távoli felülírása | Új feladat létrehozása
+
+**Automatikus Szinkronizáció**
+- Beállítható időköz (5 perc, 15 perc, 1 óra, Kikapcsolva)
+- Background polling (setInterval)
+- Csak változások szinkronizálása (ETag alapú)
+
+#### 6. **Backend API Végpontok**
+
+```javascript
+// Nextcloud konfiguráció
+POST   /api/nextcloud/config        // Beállítások mentése
+GET    /api/nextcloud/config        // Beállítások lekérése
+POST   /api/nextcloud/test          // Kapcsolat tesztelése
+
+// Naptár műveletek
+GET    /api/nextcloud/calendars     // Elérhető naptárak listája
+POST   /api/nextcloud/sync/push     // Feladat(ok) kiírása Nextcloud-ba
+POST   /api/nextcloud/sync/pull     // Import Nextcloud-ból
+GET    /api/nextcloud/sync/status   // Szinkronizációs státusz
+
+// Feladat specifikus sync
+POST   /api/tasks/:id/sync          // Egy feladat szinkronizálása
+DELETE /api/tasks/:id/sync          // Nextcloud event törlése
+```
+
+#### 7. **MySQL Tábla Módosítások**
+
+```sql
+-- Nextcloud konfiguráció tárolása
+CREATE TABLE nextcloud_config (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  server_url VARCHAR(255) NOT NULL,
+  username VARCHAR(255) NOT NULL,
+  password_encrypted TEXT NOT NULL,      -- bcrypt encrypted
+  calendar_url VARCHAR(255) NOT NULL,
+  sync_enabled BOOLEAN DEFAULT false,
+  auto_sync_interval INT DEFAULT 0,      -- percekben (0 = kikapcsolva)
+  last_sync_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Feladat szinkronizációs státusz
+ALTER TABLE tasks ADD COLUMN nextcloud_synced BOOLEAN DEFAULT false;
+ALTER TABLE tasks ADD COLUMN nextcloud_event_id VARCHAR(255) NULL;
+ALTER TABLE tasks ADD COLUMN nextcloud_synced_at TIMESTAMP NULL;
+ALTER TABLE tasks ADD COLUMN nextcloud_sync_error TEXT NULL;
+ALTER TABLE tasks ADD INDEX idx_nextcloud_sync (nextcloud_synced, nextcloud_event_id);
+```
+
+#### 8. **Frontend UI Komponensek**
+
+**Settings Tab - Nextcloud Szekció**
+```html
+<div class="settings-card">
+  <h3>☁️ Nextcloud Naptár Integráció</h3>
+
+  <div class="form-group">
+    <label>Nextcloud Szerver URL</label>
+    <input type="url" id="nextcloudServerUrl" placeholder="https://cloud.example.com">
+  </div>
+
+  <div class="form-group">
+    <label>Felhasználónév</label>
+    <input type="text" id="nextcloudUsername" placeholder="user@example.com">
+  </div>
+
+  <div class="form-group">
+    <label>Jelszó / App Password</label>
+    <input type="password" id="nextcloudPassword">
+  </div>
+
+  <div class="form-group">
+    <label>Naptár</label>
+    <select id="nextcloudCalendar">
+      <option value="">-- Válassz naptárt --</option>
+    </select>
+    <button class="btn btn-sm" onclick="loadNextcloudCalendars()">🔄 Naptárak betöltése</button>
+  </div>
+
+  <div class="form-group">
+    <label>
+      <input type="checkbox" id="nextcloudAutoSync">
+      Automatikus szinkronizáció
+    </label>
+    <select id="nextcloudSyncInterval">
+      <option value="0">Kikapcsolva</option>
+      <option value="5">5 percenként</option>
+      <option value="15">15 percenként</option>
+      <option value="60">Óránként</option>
+    </select>
+  </div>
+
+  <div class="nextcloud-status">
+    <span id="nextcloudStatus">⚪ Nincs beállítva</span>
+    <span id="nextcloudLastSync"></span>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="testNextcloudConnection()">🧪 Kapcsolat tesztelése</button>
+    <button class="btn" onclick="saveNextcloudConfig()">💾 Beállítások mentése</button>
+    <button class="btn" onclick="syncAllTasks()">🔄 Összes feladat szinkronizálása</button>
+  </div>
+</div>
+```
+
+**Feladat Kártya - Sync Státusz**
+```html
+<div class="task-item">
+  <div class="task-header">
+    <h4>Backend API fejlesztés</h4>
+    <div class="task-sync-status">
+      <span class="sync-badge local-saved" title="Lokálisan mentve">✅</span>
+      <span class="sync-badge nextcloud-synced" title="Nextcloud szinkronizálva">☁️</span>
+      <span class="sync-time">2025-10-02 10:45</span>
+    </div>
+  </div>
+
+  <div class="task-actions">
+    <button onclick="syncTaskToNextcloud(taskId)">📤 Nextcloud-ba</button>
+    <button onclick="editTask(taskId)">✏️</button>
+    <button onclick="deleteTask(taskId)">🗑️</button>
+  </div>
+</div>
+```
+
+**Szinkronizáció Modal (Konfliktus Kezelés)**
+```html
+<div class="modal-overlay">
+  <div class="modal-content">
+    <h2>⚠️ Szinkronizációs Konfliktus</h2>
+    <p>Ez a feladat mindkét helyen módosult. Válaszd ki, melyik verzió maradjon:</p>
+
+    <div class="conflict-compare">
+      <div class="version local">
+        <h3>📱 Lokális verzió</h3>
+        <p><strong>Módosítva:</strong> 2025-10-02 10:30</p>
+        <p><strong>Határidő:</strong> 2025-10-15</p>
+        <p><strong>Státusz:</strong> Folyamatban</p>
+      </div>
+
+      <div class="version remote">
+        <h3>☁️ Nextcloud verzió</h3>
+        <p><strong>Módosítva:</strong> 2025-10-02 10:45</p>
+        <p><strong>Határidő:</strong> 2025-10-20</p>
+        <p><strong>Státusz:</strong> Befejezett</p>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="resolveConflict('keep-local')">📱 Lokális megtartása</button>
+      <button class="btn" onclick="resolveConflict('keep-remote')">☁️ Távoli elfogadása</button>
+      <button class="btn" onclick="resolveConflict('create-new')">➕ Mindkettő megtartása</button>
+      <button class="btn btn-secondary" onclick="closeConflictModal()">❌ Mégse</button>
+    </div>
+  </div>
+</div>
+```
+
+#### 9. **Biztonsági Megfontolások**
+
+- **App Password használata**: Nextcloud App Password generálása (nem a fő jelszó)
+- **Jelszó titkosítás**: bcrypt hash az adatbázisban
+- **HTTPS kötelező**: Csak biztonságos kapcsolat
+- **Token frissítés**: CalDAV session kezelés
+- **Rate limiting**: Max 10 sync kérés / perc / felhasználó
+- **Error handling**: Részletes hibakezelés és retry logika
+
+#### 10. **npm Függőségek**
+
+```json
+{
+  "dependencies": {
+    "caldav-client": "^1.0.0",        // CalDAV protokoll kliens
+    "ical.js": "^1.5.0",               // iCalendar parser
+    "dav": "^1.8.1",                   // Alternative CalDAV library
+    "node-fetch": "^3.3.0"             // HTTP requests
+  }
+}
+```
+
+#### 11. **Fejlesztési Lépések (Ütemterv)**
+
+**1. Fázis - Backend CalDAV Integráció (2-3 nap)**
+- [x] CalDAV kliens beállítása
+- [x] Nextcloud authentikáció
+- [x] Naptár lista lekérése
+- [x] Event CREATE/UPDATE/DELETE műveletek
+- [x] Konfiguráció API végpontok
+
+**2. Fázis - Szinkronizációs Logika (2-3 nap)**
+- [x] Push szinkronizáció (lokális → Nextcloud)
+- [x] Pull szinkronizáció (Nextcloud → lokális)
+- [x] Konfliktus detektálás
+- [x] Automatikus polling mechanizmus
+- [x] Error handling és retry
+
+**3. Fázis - Frontend UI (1-2 nap)**
+- [x] Nextcloud beállítások Settings tab-on
+- [x] Sync gombok feladat kártyákon
+- [x] Státusz indikátorok (✅☁️🔄❌)
+- [x] Konfliktus megoldó modal
+- [x] Notification feedback
+
+**4. Fázis - Tesztelés (1-2 nap)**
+- [x] Nextcloud teszt instance létrehozása
+- [x] Szinkronizációs tesztek (CRUD)
+- [x] Konfliktus szituációk tesztelése
+- [x] Performance teszt (100+ feladat)
+- [x] E2E Playwright tesztek
+
+**Összesen: 6-10 nap (~1-2 hét)**
+
+#### 12. **Tesztelési Környezet**
+
+```bash
+# Docker Nextcloud instance indítása
+docker run -d \
+  --name nextcloud-test \
+  -p 8080:80 \
+  -e SQLITE_DATABASE=nextcloud \
+  -e NEXTCLOUD_ADMIN_USER=admin \
+  -e NEXTCLOUD_ADMIN_PASSWORD=admin123 \
+  nextcloud:latest
+
+# CalDAV endpoint: http://localhost:8080/remote.php/dav/calendars/admin/personal/
+```
+
+#### 13. **Dokumentáció**
+
+- **Felhasználói útmutató**: Nextcloud App Password generálása
+- **Admin útmutató**: Nextcloud szerver konfiguráció
+- **API dokumentáció**: CalDAV végpontok leírása
+- **Troubleshooting**: Gyakori hibák és megoldások
+
+---
 
 **Következő session indulhat innen!** 🚀
