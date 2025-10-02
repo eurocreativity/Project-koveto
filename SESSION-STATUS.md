@@ -133,6 +133,44 @@ socket.on('user:offline', ({ socketId }) => {})
   - Real-time user frissítések (Socket.IO)
   - Admin jogosultság ellenőrzés
 
+- ✅ **Export/Import Funkciók** (2025-10-02 elkészült)
+  - ⚙️ **Beállítások tab** (Settings)
+    - 4-card grid layout
+    - Rendszer információ card (statisztikák)
+  - 📤 **Export funkciók:**
+    - CSV export (projektek és feladatok külön)
+      - Excel-kompatibilis formátum
+      - Speciális karakterek escapelése (vessző, idézőjel)
+      - Dátum szerinti fájlnév (projektek-2025-10-02.csv)
+    - JSON export (projektek és feladatok külön)
+      - Teljes adatstruktúra megőrzése
+      - Pretty-printed JSON formátum
+    - **Teljes mentés (Full Backup)**
+      - Összes adat egyetlen JSON fájlban
+      - Metadata: exported_at, version
+      - Arrays: projects, tasks
+  - 📥 **Import funkciók:**
+    - Import modal (glassmorphism design)
+    - File upload (JSON fájlok)
+    - JSON struktúra validáció
+    - Megerősítő dialógus (import előtt)
+      - Mutatja az importálandó elemek számát
+      - Figyelmeztetés: NEM törli a meglévő adatokat
+    - **Non-destructive import**: Hozzáadja az adatokat, nem törli a régieket
+    - Real-time Socket.IO broadcast minden importált elemhez
+    - Success notification
+  - 📊 **Rendszer statisztikák:**
+    - Projektek száma (real-time)
+    - Feladatok száma (real-time)
+    - Felhasználók száma (real-time)
+    - Utolsó frissítés időpontja
+  - 🎨 **UI fejlesztések:**
+    - Export gombok a Projektek és Feladatok tabokon
+    - Card-based layout a Settings tab-on
+    - Info card (CSV és JSON magyarázat)
+    - Blob API használat a fájlletöltésekhez
+    - FileReader API az import-hoz
+
 - ✅ **FullCalendar integráció**
   - Havi/heti/lista nézet
   - Projektek és feladatok megjelenítése
@@ -223,7 +261,7 @@ npx playwright test user-tests.spec.js --reporter=list
 - [x] Projekt szerkesztés/törlés UI ✅ (2025-10-01 elkészült)
 - [x] Projekt részletek modal ✅ (2025-10-01 elkészült)
 - [x] User management UI ✅ (2025-10-02 elkészült)
-- [ ] Export/Import funkciók
+- [x] Export/Import funkciók ✅ (2025-10-02 elkészült)
 - [ ] Dark mode
 - [ ] Email értesítések
 
@@ -407,9 +445,10 @@ http://localhost:8000
 12. ✅ Project Edit/Delete funkciók működnek
 13. ✅ Project Details Modal (részletes projekt nézet)
 14. ✅ User Management UI (avatar, role, szerkesztés, real-time)
+15. ✅ Export/Import funkciók (CSV, JSON, Full Backup, Import modal)
 
 ---
 
-**Projekt készültség:** 90% (MVP + Task CRUD + Project Edit/Delete + Details Modal + User Management kész, haladó funkciók fejlesztés alatt)
+**Projekt készültség:** 95% (MVP + Task CRUD + Project Edit/Delete + Details Modal + User Management + Export/Import kész, haladó funkciók fejlesztés alatt)
 
 **Következő session indulhat innen!** 🚀
