@@ -202,7 +202,8 @@ project-tracker-backend/
 │   │   ├── auth.js
 │   │   ├── projects.js
 │   │   ├── tasks.js
-│   │   └── users.js
+│   │   ├── users.js
+│   │   └── calendar.js         # Calendar events
 │   ├── sockets/
 │   │   └── projectSocket.js     # Socket.IO real-time events
 │   ├── models/
@@ -922,10 +923,15 @@ chown web1:client1 -R .
 - ✅ Notification rendszer
 
 ### 4. FÁZIS – ISPConfig deployment (1-2 nap)
-- ✅ Node.js + PM2 konfiguráció
-- ✅ Nginx reverse proxy
-- ✅ SSL tanúsítvány
-- ✅ Adatbázis importálás
+- ✅ MySQL lokális setup (XAMPP MariaDB 10.4.32) - 2025-10-02
+- ✅ Production backend MySQL integráció - 2025-10-02
+- ✅ User Management API (userController.js) - 2025-10-02
+- ✅ Calendar Events API (getCalendarEvents) - 2025-10-02
+- ✅ Frontend + Backend integráció tesztelve - 2025-10-02
+- [ ] Node.js + PM2 konfiguráció (éles szerveren)
+- [ ] Nginx reverse proxy (éles szerveren)
+- [ ] SSL tanúsítvány (éles szerveren)
+- [ ] Adatbázis importálás (éles szerveren)
 
 ### 5. FÁZIS – Haladó funkciók (3-5 nap)
 - ✅ Task CRUD UI (lista, szűrés, CRUD) - 2025-10-01
