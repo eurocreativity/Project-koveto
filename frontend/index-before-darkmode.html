@@ -59,7 +59,6 @@
         }
 
         body::before {
-            transition: opacity 0.3s ease;
             content: '';
             position: fixed;
             top: 0;
@@ -81,12 +80,12 @@
 
         /* Header */
         header {
-            background: var(--card-bg-light);
+            background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
             margin-bottom: 30px;
-            box-shadow: 0 8px 32px var(--shadow-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             display: flex;
             justify-content: space-between;
@@ -132,10 +131,10 @@
         }
 
         .auth-card {
-            background: var(--card-bg);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 8px 32px var(--shadow-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             max-width: 400px;
             width: 100%;
         }
@@ -149,7 +148,7 @@
         }
 
         .tab {
-            background: var(--card-bg-light);
+            background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -162,7 +161,7 @@
         }
 
         .tab:hover {
-            background: var(--card-bg-light);
+            background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
         }
 
@@ -173,11 +172,11 @@
 
         /* Content */
         .content {
-            background: var(--card-bg);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 8px 32px var(--shadow-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
@@ -197,7 +196,7 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: var(--text-primary);
+            color: #333;
             font-weight: 500;
         }
 
@@ -240,7 +239,7 @@
 
         .btn-secondary {
             background: #e0e0e0;
-            color: var(--text-primary);
+            color: #333;
         }
 
         .btn-secondary:hover {
@@ -248,7 +247,7 @@
         }
 
         .btn-icon {
-            background: var(--card-bg-light);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.3);
             padding: 10px 16px;
@@ -264,7 +263,7 @@
         }
 
         .btn-icon:hover {
-            background: var(--card-bg-light);
+            background: rgba(255, 255, 255, 0.3);
             transform: scale(1.1) rotate(15deg);
         }
 
@@ -315,7 +314,7 @@
 
         .project-title, .task-title {
             font-size: 1.3em;
-            color: var(--text-primary);
+            color: #333;
             font-weight: 600;
         }
 
@@ -376,7 +375,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: var(--input-bg);
+            background: white;
             padding: 15px 20px;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -417,7 +416,7 @@
 
         /* User Management */
         .user-card {
-            background: var(--card-bg);
+            background: rgba(255, 255, 255, 0.95);
             border: 1px solid rgba(102, 126, 234, 0.2);
             border-radius: 15px;
             padding: 25px;
@@ -460,12 +459,12 @@
         .user-name {
             font-size: 1.2em;
             font-weight: 600;
-            color: var(--text-primary);
+            color: #333;
             margin-bottom: 5px;
         }
 
         .user-email {
-            color: var(--text-secondary);
+            color: #666;
             font-size: 0.95em;
             margin-bottom: 8px;
         }
@@ -537,7 +536,7 @@
         }
 
         .modal-content {
-            background: var(--input-bg);
+            background: white;
             border-radius: 20px;
             max-width: 900px;
             width: 90%;
@@ -570,7 +569,7 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: var(--card-bg-light);
+            background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
             font-size: 24px;
@@ -582,7 +581,7 @@
         }
 
         .modal-close:hover {
-            background: var(--card-bg-light);
+            background: rgba(255, 255, 255, 0.3);
             transform: rotate(90deg);
         }
 
@@ -602,7 +601,7 @@
 
         .detail-label {
             font-size: 0.85em;
-            color: var(--text-secondary);
+            color: #666;
             margin-bottom: 5px;
             font-weight: 600;
             text-transform: uppercase;
@@ -611,7 +610,7 @@
 
         .detail-value {
             font-size: 1.1em;
-            color: var(--text-primary);
+            color: #333;
             font-weight: 500;
         }
 
@@ -623,7 +622,7 @@
 
         .section-title {
             font-size: 1.3em;
-            color: var(--text-primary);
+            color: #333;
             margin-bottom: 20px;
             font-weight: 600;
         }
@@ -651,13 +650,13 @@
 
         .task-item-title {
             font-weight: 600;
-            color: var(--text-primary);
+            color: #333;
             font-size: 1.05em;
         }
 
         .task-item-meta {
             font-size: 0.9em;
-            color: var(--text-secondary);
+            color: #666;
             margin-top: 5px;
         }
 
@@ -841,49 +840,6 @@
             currentUser = null;
             showAuthScreen();
             showNotification('Sikeres kijelentkezés');
-        }
-
-        // Dark Mode Toggle
-        function toggleDarkMode() {
-            const body = document.body;
-            const isDarkMode = body.classList.toggle('dark-mode');
-
-            // Save preference to localStorage
-            localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
-
-            // Update toggle icon
-            const themeIcon = document.querySelector('.theme-icon');
-            if (themeIcon) {
-                themeIcon.textContent = isDarkMode ? '☀️' : '🌙';
-            }
-
-            // Show notification
-            showNotification(isDarkMode ? '🌙 Sötét mód bekapcsolva' : '☀️ Világos mód bekapcsolva');
-        }
-
-        // Initialize dark mode from localStorage
-        function initDarkMode() {
-            const darkModePreference = localStorage.getItem('darkMode');
-
-            if (darkModePreference === 'enabled') {
-                document.body.classList.add('dark-mode');
-                const themeIcon = document.querySelector('.theme-icon');
-                if (themeIcon) {
-                    themeIcon.textContent = '☀️';
-                }
-            }
-
-            // Also check system preference if no saved preference
-            if (darkModePreference === null) {
-                const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (prefersDarkMode) {
-                    document.body.classList.add('dark-mode');
-                    const themeIcon = document.querySelector('.theme-icon');
-                    if (themeIcon) {
-                        themeIcon.textContent = '☀️';
-                    }
-                }
-            }
         }
 
         // Connect to Socket.IO
@@ -1074,16 +1030,16 @@
                         <div id="settings" class="section">
                             <h2>⚙️ Beállítások & Adatkezelés</h2>
 
-                            <div style="background: var(--card-bg); padding: 30px; border-radius: 15px; margin-bottom: 20px;">
+                            <div style="background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px; margin-bottom: 20px;">
                                 <h3 style="margin-top: 0; color: #667eea;">📥 Import / Export</h3>
-                                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                                <p style="color: #666; margin-bottom: 20px;">
                                     Exportálj vagy importálj adatokat a rendszerbe.
                                 </p>
 
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
                                     <div style="border: 1px solid #667eea; border-radius: 12px; padding: 20px;">
                                         <h4 style="margin-top: 0;">📤 Export</h4>
-                                        <p style="color: var(--text-secondary); font-size: 0.9em;">Projektek, feladatok külön exportálása</p>
+                                        <p style="color: #666; font-size: 0.9em;">Projektek, feladatok külön exportálása</p>
                                         <div style="margin-top: 15px;">
                                             <p style="font-size: 0.85em; color: #999;">Projektek tab-on és Feladatok tab-on találhatók az export gombok.</p>
                                         </div>
@@ -1091,7 +1047,7 @@
 
                                     <div style="border: 1px solid #764ba2; border-radius: 12px; padding: 20px;">
                                         <h4 style="margin-top: 0;">💾 Teljes mentés</h4>
-                                        <p style="color: var(--text-secondary); font-size: 0.9em;">Minden adat mentése JSON-be</p>
+                                        <p style="color: #666; font-size: 0.9em;">Minden adat mentése JSON-be</p>
                                         <button class="btn" onclick="exportAllData()" style="margin-top: 10px; width: 100%;">
                                             💾 Teljes mentés letöltése
                                         </button>
@@ -1099,7 +1055,7 @@
 
                                     <div style="border: 1px solid #f093fb; border-radius: 12px; padding: 20px;">
                                         <h4 style="margin-top: 0;">📥 Import</h4>
-                                        <p style="color: var(--text-secondary); font-size: 0.9em;">JSON fájl visszatöltése</p>
+                                        <p style="color: #666; font-size: 0.9em;">JSON fájl visszatöltése</p>
                                         <button class="btn" onclick="showImportModal()" style="margin-top: 10px; width: 100%;">
                                             📥 Adatok importálása
                                         </button>
@@ -1107,7 +1063,7 @@
 
                                     <div style="border: 1px solid #43e97b; border-radius: 12px; padding: 20px;">
                                         <h4 style="margin-top: 0;">ℹ️ Információ</h4>
-                                        <p style="color: var(--text-secondary); font-size: 0.9em;">
+                                        <p style="color: #666; font-size: 0.9em;">
                                             <strong>CSV:</strong> Excel-kompatibilis<br>
                                             <strong>JSON:</strong> Mentés/visszatöltés
                                         </p>
@@ -1115,9 +1071,9 @@
                                 </div>
                             </div>
 
-                            <div style="background: var(--card-bg); padding: 30px; border-radius: 15px;">
+                            <div style="background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px;">
                                 <h3 style="margin-top: 0; color: #667eea;">📊 Rendszer információ</h3>
-                                <div style="color: var(--text-secondary);">
+                                <div style="color: #666;">
                                     <p><strong>Projektek száma:</strong> <span id="settingsProjectCount">-</span></p>
                                     <p><strong>Feladatok száma:</strong> <span id="settingsTaskCount">-</span></p>
                                     <p><strong>Felhasználók száma:</strong> <span id="settingsUserCount">-</span></p>
@@ -1222,9 +1178,6 @@
                     </div>
                 </div>
             `;
-
-            // Initialize dark mode preference
-            initDarkMode();
         }
 
         // Switch tabs
@@ -1338,7 +1291,7 @@
             if (!container) return;
 
             if (users.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">📋 Még nincs felhasználó.</p>';
+                container.innerHTML = '<p style="text-align: center; color: #666;">📋 Még nincs felhasználó.</p>';
                 return;
             }
 
@@ -1715,7 +1668,7 @@
                             <button class="modal-close" onclick="closeImportModal()">×</button>
                         </div>
                         <div class="modal-body">
-                            <p style="margin-bottom: 20px; color: var(--text-secondary);">
+                            <p style="margin-bottom: 20px; color: #666;">
                                 Válassz egy JSON fájlt az adatok importálásához.
                                 A fájlnak tartalmaznia kell a "projects" és opcionálisan a "tasks" tömböt.
                             </p>
@@ -1807,8 +1760,8 @@
                             ${p.status === 'open' ? 'Nyitott' : p.status === 'in_progress' ? 'Folyamatban' : 'Befejezett'}
                         </span>
                     </div>
-                    <p style="color: var(--text-secondary); margin-bottom: 10px;">${p.description || ''}</p>
-                    <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 10px;">
+                    <p style="color: #666; margin-bottom: 10px;">${p.description || ''}</p>
+                    <div style="color: #666; font-size: 0.9em; margin-bottom: 10px;">
                         📅 ${p.start_date} - ${p.end_date} | 👤 ${p.owner_name || 'Ismeretlen'}
                     </div>
                     <div class="progress-bar-container">
@@ -1865,8 +1818,8 @@
                                 </span>
                             </div>
                         </div>
-                        <p style="color: var(--text-secondary); margin-bottom: 10px;">${t.description || ''}</p>
-                        <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 10px;">
+                        <p style="color: #666; margin-bottom: 10px;">${t.description || ''}</p>
+                        <div style="color: #666; font-size: 0.9em; margin-bottom: 10px;">
                             📁 ${project?.name || 'Ismeretlen projekt'} |
                             📅 Határidő: ${t.deadline} |
                             👤 ${t.owner_name || 'Ismeretlen'}
@@ -2202,7 +2155,7 @@
                             <span class="status-badge priority-${t.priority}" style="margin-left: 5px;">${priorityLabels[t.priority]}</span>
                         </div>
                     </div>
-                    ${t.description ? `<p style="color: var(--text-secondary); margin-bottom: 8px;">${t.description}</p>` : ''}
+                    ${t.description ? `<p style="color: #666; margin-bottom: 8px;">${t.description}</p>` : ''}
                     <div class="task-item-meta">
                         📅 Határidő: ${t.deadline} | 👤 ${t.owner_name || 'Ismeretlen'}
                     </div>
@@ -2257,7 +2210,7 @@
                                     </div>
                                     <div class="detail-value" style="min-width: 60px;">${progress}%</div>
                                 </div>
-                                <div style="margin-top: 10px; font-size: 0.9em; color: var(--text-secondary);">
+                                <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
                                     ${completedTasks} / ${totalTasks} feladat befejezve
                                 </div>
                             </div>
