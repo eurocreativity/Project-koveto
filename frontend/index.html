@@ -2133,8 +2133,33 @@
                     right: 'dayGridMonth,timeGridWeek,listWeek'
                 },
                 events: [],
+                editable: true,  // Enable drag & drop
+                eventDurationEditable: true,  // Enable resizing
                 eventClick: function(info) {
-                    alert('Projekt: ' + info.event.title);
+                    // Show task/project details on click
+                    if (info.event.extendedProps.type === 'task') {
+                        showTaskDetails(info.event.extendedProps.taskId);
+                    } else if (info.event.extendedProps.type === 'project') {
+                        showProjectDetails(info.event.extendedProps.projectId);
+                    }
+                },
+                eventDrop: async function(info) {
+                    // Handle task/project drop (date change)
+                    const eventData = info.event.extendedProps;
+
+                    if (eventData.type === 'task') {
+                        await handleTaskDrop(info);
+                    } else if (eventData.type === 'project') {
+                        await handleProjectDrop(info);
+                    }
+                },
+                eventResize: async function(info) {
+                    // Handle event resize (duration change)
+                    const eventData = info.event.extendedProps;
+
+                    if (eventData.type === 'project') {
+                        await handleProjectResize(info);
+                    }
                 }
             });
 
@@ -2148,15 +2173,27 @@
 
             const events = [
                 ...projects.map(p => ({
+                    id: `project-${p.id}`,
                     title: p.name,
                     start: p.start_date,
                     end: p.end_date,
-                    color: p.color
+                    color: p.color,
+                    extendedProps: {
+                        type: 'project',
+                        projectId: p.id,
+                        data: p
+                    }
                 })),
                 ...tasks.map(t => ({
+                    id: `task-${t.id}`,
                     title: `📋 ${t.name}`,
                     start: t.deadline,
-                    color: '#f57c00'
+                    color: t.priority === 'high' ? '#ef4444' : t.priority === 'medium' ? '#f59e0b' : '#10b981',
+                    extendedProps: {
+                        type: 'task',
+                        taskId: t.id,
+                        data: t
+                    }
                 }))
             ];
 
@@ -2302,6 +2339,149 @@
             }
             const modal = document.getElementById('projectDetailsModal');
             if (modal) modal.remove();
+        }
+
+        // Handle task drag & drop (deadline change)
+        async function handleTaskDrop(info) {
+            const taskId = info.event.extendedProps.taskId;
+            const newDeadline = info.event.start.toISOString().split('T')[0];
+
+            try {
+                const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        deadline: newDeadline
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update task deadline');
+                }
+
+                const result = await response.json();
+
+                // Update local task data
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.deadline = newDeadline;
+                }
+
+                showNotification(`✅ Feladat határidő frissítve: ${newDeadline}`);
+
+                // Reload data to sync
+                await loadData();
+
+            } catch (error) {
+                console.error('Task drop error:', error);
+                showNotification('❌ Hiba történt a dátum frissítésekor', 'error');
+                info.revert(); // Revert the change on error
+            }
+        }
+
+        // Handle project drag & drop (start date change)
+        async function handleProjectDrop(info) {
+            const projectId = info.event.extendedProps.projectId;
+            const delta = info.delta; // Time delta of the drag
+
+            const project = projects.find(p => p.id === projectId);
+            if (!project) {
+                info.revert();
+                return;
+            }
+
+            // Calculate new dates
+            const oldStartDate = new Date(project.start_date);
+            const oldEndDate = new Date(project.end_date);
+            const newStartDate = new Date(oldStartDate.getTime() + delta.milliseconds);
+            const newEndDate = new Date(oldEndDate.getTime() + delta.milliseconds);
+
+            const newStartStr = newStartDate.toISOString().split('T')[0];
+            const newEndStr = newEndDate.toISOString().split('T')[0];
+
+            try {
+                const response = await fetch(`${API_URL}/projects/${projectId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        start_date: newStartStr,
+                        end_date: newEndStr
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update project dates');
+                }
+
+                // Update local project data
+                project.start_date = newStartStr;
+                project.end_date = newEndStr;
+
+                showNotification(`✅ Projekt dátum frissítve`);
+
+                // Reload data to sync
+                await loadData();
+
+            } catch (error) {
+                console.error('Project drop error:', error);
+                showNotification('❌ Hiba történt a dátum frissítésekor', 'error');
+                info.revert(); // Revert the change on error
+            }
+        }
+
+        // Handle project resize (end date change)
+        async function handleProjectResize(info) {
+            const projectId = info.event.extendedProps.projectId;
+            const newEndDate = info.event.end.toISOString().split('T')[0];
+
+            try {
+                const response = await fetch(`${API_URL}/projects/${projectId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        end_date: newEndDate
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update project end date');
+                }
+
+                const result = await response.json();
+
+                // Update local project data
+                const project = projects.find(p => p.id === projectId);
+                if (project) {
+                    project.end_date = newEndDate;
+                }
+
+                showNotification(`✅ Projekt befejezési dátum frissítve`);
+
+                // Reload data to sync
+                await loadData();
+
+            } catch (error) {
+                console.error('Project resize error:', error);
+                showNotification('❌ Hiba történt a dátum frissítésekor', 'error');
+                info.revert(); // Revert the change on error
+            }
+        }
+
+        // Show task details (placeholder - can be enhanced)
+        function showTaskDetails(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            alert(`Feladat: ${task.name}\n\nHatáridő: ${task.deadline}\nStátusz: ${task.status}\nPrioritás: ${task.priority}\n\n${task.description || ''}`);
         }
 
         // Show notification

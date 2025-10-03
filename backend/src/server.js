@@ -6,9 +6,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const { testConnection } = require('./config/database');
+const { testConnection, pool } = require('./config/database');
 const { setupSocketHandlers } = require('./sockets/projectSocket');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const emailService = require('./services/emailService');
+const DeadlineChecker = require('./services/deadlineChecker');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -87,6 +89,18 @@ async function startServer() {
       process.exit(1);
     }
 
+    // Initialize deadline checker (runs daily at 8:00 AM)
+    const deadlineChecker = new DeadlineChecker(pool);
+    deadlineChecker.start();
+
+    // Test email connection (if enabled)
+    const emailTest = await emailService.testConnection();
+    if (emailTest.success) {
+      console.log('✅ Email service connected');
+    } else if (process.env.EMAIL_ENABLED === 'true') {
+      console.warn('⚠️ Email enabled but connection failed:', emailTest.message);
+    }
+
     // Start HTTP server
     server.listen(PORT, () => {
       console.log('='.repeat(50));
@@ -97,8 +111,12 @@ async function startServer() {
       console.log(`🔗 API URL: http://localhost:${PORT}/api`);
       console.log(`💾 Database: ${process.env.DB_NAME || 'project_tracker'}`);
       console.log(`⚡ Socket.IO: Enabled`);
+      console.log(`📧 Email notifications: ${process.env.EMAIL_ENABLED === 'true' ? 'Enabled' : 'Disabled'}`);
       console.log('='.repeat(50));
     });
+
+    // Store deadline checker for graceful shutdown
+    app.set('deadlineChecker', deadlineChecker);
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);
@@ -108,6 +126,8 @@ async function startServer() {
 // Handle graceful shutdown
 process.on('SIGINT', () => {
   console.log('\n🛑 Shutting down server...');
+  const deadlineChecker = app.get('deadlineChecker');
+  if (deadlineChecker) deadlineChecker.stop();
   server.close(() => {
     console.log('✅ Server closed');
     process.exit(0);
@@ -116,6 +136,8 @@ process.on('SIGINT', () => {
 
 process.on('SIGTERM', () => {
   console.log('\n🛑 SIGTERM signal received: closing server');
+  const deadlineChecker = app.get('deadlineChecker');
+  if (deadlineChecker) deadlineChecker.stop();
   server.close(() => {
     console.log('✅ Server closed');
     process.exit(0);

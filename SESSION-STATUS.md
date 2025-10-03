@@ -1,7 +1,7 @@
 # 📊 Projekt Követő Rendszer - Fejlesztési Állapot
 
-**Utolsó frissítés:** 2025-10-02
-**Státusz:** Production Backend MySQL-lel + Frontend MVP + Összes API endpoint kész + MySQL integráció ✅
+**Utolsó frissítés:** 2025-10-03
+**Státusz:** Production Backend + Email Notifications + Drag & Drop + E2E Tests + Demo Data ✅
 
 ---
 
@@ -12,22 +12,35 @@
 **Lokáció:** `f:\AI\Project koveto\backend/`
 
 #### Fájlok:
-- ✅ `src/server.js` - Főszerver (Express + Socket.IO)
+- ✅ `src/server.js` - Főszerver (Express + Socket.IO + Email Service)
 - ✅ `src/config/database.js` - MySQL connection pool
 - ✅ `src/config/jwt.js` - JWT token utilities
 - ✅ `src/controllers/authController.js` - Register, login, me
 - ✅ `src/controllers/projectController.js` - Project CRUD
-- ✅ `src/controllers/taskController.js` - Task CRUD
+- ✅ `src/controllers/taskController.js` - Task CRUD + Email notifications
+- ✅ `src/controllers/userController.js` - User management
 - ✅ `src/middleware/authMiddleware.js` - JWT verification
 - ✅ `src/middleware/errorHandler.js` - Error handling
 - ✅ `src/routes/auth.js` - Auth routes
 - ✅ `src/routes/projects.js` - Project routes
 - ✅ `src/routes/tasks.js` - Task routes
+- ✅ `src/routes/users.js` - User routes
+- ✅ `src/routes/calendar.js` - Calendar events
 - ✅ `src/sockets/projectSocket.js` - Real-time events
+- ✅ `src/services/emailService.js` - **NEW** Email notifications (Nodemailer)
+- ✅ `src/services/deadlineChecker.js` - **NEW** Cron job (deadline reminders)
 - ✅ `schema.sql` - MySQL database schema + demo data
+- ✅ `seed.js` - **NEW** Database seed script
+- ✅ `seed-demo-data.sql` - **NEW** SQL seed script
 - ✅ `test-server.js` - Mock API (MySQL nélkül, teszteléshez)
+- ✅ `api-tests.spec.js` - REST API tests (20 tests)
+- ✅ `socket-tests.spec.js` - Socket.IO tests (8 tests)
+- ✅ `user-tests.spec.js` - User management tests (10 tests)
+- ✅ `frontend-tests.spec.js` - **NEW** Frontend E2E tests (15 tests)
+- ✅ `quick-tests.spec.js` - **NEW** Quick E2E tests (10 tests)
 - ✅ `ecosystem.config.js` - PM2 configuration
-- ✅ `package.json` - Dependencies
+- ✅ `package.json` - Dependencies (+ nodemailer, node-cron)
+- ✅ `.env` - Environment configuration (EMAIL settings)
 - ✅ `.env.example` - Environment template
 - ✅ `README.md` - Backend dokumentáció
 
@@ -201,10 +214,21 @@ socket.on('user:offline', ({ socketId }) => {})
     - User management UI
     - Settings oldal
 
-- ✅ **FullCalendar integráció**
+- ✅ **FullCalendar integráció** (2025-10-03 frissítve)
   - Havi/heti/lista nézet
   - Projektek és feladatok megjelenítése
-  - Színes események
+  - Színes események (projektek és prioritás szerint)
+  - **🆕 Drag & Drop támogatás:**
+    - Task drag & drop → Határidő módosítás
+    - Project drag & drop → Projekt dátumok eltolása
+    - Project resize → Befejezési dátum módosítás
+    - Real-time szinkronizáció (Socket.IO)
+    - Error handling (revert on failure)
+    - Visual feedback (notifications)
+  - **🆕 Event interakció:**
+    - Click event → Task/Project details modal
+    - Extended props (type, taskId, projectId)
+    - Színkódolás prioritás szerint (piros/sárga/zöld)
 
 - ✅ **Real-time Socket.IO**
   - Automatikus kapcsolódás
@@ -293,9 +317,10 @@ npx playwright test user-tests.spec.js --reporter=list
 - [x] User management UI ✅ (2025-10-02 elkészült)
 - [x] Export/Import funkciók ✅ (2025-10-02 elkészült)
 - [x] Dark mode ✅ (2025-10-02 elkészült)
+- [x] **Email értesítések** ✅ (2025-10-03 elkészült - Nodemailer + Cron)
+- [x] **Drag & Drop naptárban** ✅ (2025-10-03 elkészült - FullCalendar editable)
+- [x] **E2E Playwright tesztek** ✅ (2025-10-03 elkészült - 25 teszt)
 - [ ] **Nextcloud Naptár Integráció** (tervezett)
-- [ ] Email értesítések
-- [ ] Drag & Drop naptárban (FullCalendar)
 
 ### Deployment:
 - [ ] MySQL adatbázis létrehozása éles környezetben
@@ -479,10 +504,14 @@ http://localhost:8000
 14. ✅ User Management UI (avatar, role, szerkesztés, real-time)
 15. ✅ Export/Import funkciók (CSV, JSON, Full Backup, Import modal)
 16. ✅ Dark Mode (CSS variables, toggle, localStorage, transitions)
+17. ✅ Email értesítések (Nodemailer + Cron job, 2025-10-03)
+18. ✅ Drag & Drop naptárban (FullCalendar editable, 2025-10-03)
+19. ✅ E2E Playwright tesztek (25 frontend + backend teszt, 2025-10-03)
+20. ✅ Demo adatbázis seed (3 user, 3 projekt, 13 feladat, 2025-10-03)
 
 ---
 
-**Projekt készültség:** 97% (MVP + Task CRUD + Project Edit/Delete + Details Modal + User Management + Export/Import + Dark Mode kész)
+**Projekt készültség:** 99% (Production-ready + Email + Drag & Drop + E2E Tests + Demo Data)
 
 ---
 
@@ -836,6 +865,187 @@ docker run -d \
 ---
 
 **Következő session indulhat innen!** 🚀
+
+---
+
+## 📧 Email Értesítések (2025-10-03 Elkészült)
+
+### Nodemailer integráció
+- ✅ **Email Service** (`src/services/emailService.js`)
+  - Nodemailer SMTP konfiguráció
+  - HTML email template-ek
+  - Gmail / SMTP szerver támogatás
+  - Error handling és retry logika
+
+### Email típusok
+- ✉️ **Task assignment** - Új feladat hozzárendelés
+- ⚠️ **Deadline reminder** - 1 nap és 3 nap előtti figyelmeztetések
+- 🔄 **Status change** - Feladat státusz változás
+- 🚀 **Project created** - Új projekt létrehozva
+
+### Cron job scheduler
+- ✅ **Deadline Checker** (`src/services/deadlineChecker.js`)
+  - node-cron használata
+  - Napi futás: 8:00 AM
+  - Automatikus deadline ellenőrzés
+  - Email küldés lejáró feladatokról
+
+### Konfiguráció (.env)
+```env
+EMAIL_ENABLED=false              # Email funkció ki/be
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+EMAIL_FROM=Projekt Követő <your-email@gmail.com>
+```
+
+### Használat
+- **Fejlesztés közben**: EMAIL_ENABLED=false (console log only)
+- **Production**: EMAIL_ENABLED=true + Gmail App Password vagy SMTP konfiguráció
+- **ISPConfig deployment**: Saját mail szerver is használható
+
+### Task controller integráció
+- Email küldés új task létrehozáskor
+- Email küldés task státusz módosításkor
+- Async működés (nem blokkolja az API response-t)
+
+---
+
+## 🗓️ FullCalendar Drag & Drop (2025-10-03 Elkészült)
+
+### Editable Calendar
+- ✅ **Drag & Drop engedélyezve** (`editable: true`)
+- ✅ **Event resize** (`eventDurationEditable: true`)
+- ✅ **Real-time szinkronizáció** (Socket.IO broadcast)
+
+### Támogatott műveletek
+1. **Task drag & drop**
+   - Feladat húzása másik napra
+   - Automatikus deadline frissítés (PUT /api/tasks/:id)
+   - Notification: "✅ Feladat határidő frissítve"
+
+2. **Project drag & drop**
+   - Projekt húzása (start_date + end_date eltolódik)
+   - Delta számítás (time difference)
+   - Mindkét dátum frissítése (PUT /api/projects/:id)
+   - Notification: "✅ Projekt dátum frissítve"
+
+3. **Project resize**
+   - Projekt széle húzása (end_date módosul)
+   - Visual feedback
+   - Notification: "✅ Projekt befejezési dátum frissítve"
+
+### Event handlers
+```javascript
+eventDrop: handleTaskDrop / handleProjectDrop
+eventResize: handleProjectResize
+eventClick: showTaskDetails / showProjectDetails
+```
+
+### Error handling
+- API hiba esetén: `info.revert()` (visszaállítás)
+- Error notification megjelenítés
+- Socket.IO broadcast minden sikeres módosításnál
+
+### Event típusok
+- **Projektek**: Színkódolva project.color szerint
+- **Feladatok**: Színkódolva prioritás szerint
+  - Magas: Piros (#ef4444)
+  - Közepes: Sárga (#f59e0b)
+  - Alacsony: Zöld (#10b981)
+
+---
+
+## 🧪 E2E Playwright Tesztek (2025-10-03 Elkészült)
+
+### Test fájlok
+- ✅ `frontend-tests.spec.js` - 15 frontend E2E teszt
+- ✅ `quick-tests.spec.js` - 10 gyors teszt (API + UI)
+- ✅ Összesen: **48 automatikus teszt** (38 backend + 10 frontend)
+
+### Frontend tesztek
+1. Landing page loads
+2. Login flow
+3. Create project
+4. Create task
+5. Edit project
+6. Delete task
+7. Filter tasks by status
+8. Dark mode toggle
+9. Dark mode persistence
+10. Export CSV
+11. Export JSON backup
+12. Logout
+13. Admin user management
+14. Calendar view
+15. Socket.IO connection
+
+### Quick tesztek
+1. API health check
+2. Frontend loads
+3. Login and verify dashboard
+4. Check projects/tasks loaded
+5. Calendar view loads
+6. Drag & drop preparation
+7. Dark mode toggle
+8. API - Get projects
+9. API - Get tasks
+10. Socket.IO connection
+
+### Futtatás
+```bash
+# Összes teszt
+npx playwright test --reporter=list
+
+# Frontend tesztek (headed mode - látható böngésző)
+npx playwright test frontend-tests.spec.js --headed
+
+# Lassított lejátszás
+npx playwright test quick-tests.spec.js --headed --slow-mo=1000
+```
+
+---
+
+## 🌱 Demo adatbázis seed (2025-10-03 Elkészült)
+
+### Seed scriptek
+- ✅ `seed.js` - Node.js seed script (bcrypt hash generálással)
+- ✅ `seed-demo-data.sql` - SQL seed script
+
+### Demo adatok
+**Felhasználók (3):**
+- Admin User (admin@example.com) - admin role
+- Kovács János (janos@example.com) - user role
+- Nagy Anna (anna@example.com) - user role
+- **Jelszó mindhárom**: `password123`
+
+**Projektek (3):**
+1. E-commerce platform fejlesztés (#667eea)
+2. Mobilalkalmazás UI design (#764ba2)
+3. CRM rendszer migráció (#f093fb)
+
+**Feladatok (13):**
+- 5 task → E-commerce projekt
+- 4 task → Mobile UI projekt
+- 4 task → CRM projekt
+- Különböző státuszok: open, in_progress, completed
+- Különböző prioritások: low, medium, high
+- Realisztikus határidők (2025-10-05 - 2025-11-10)
+
+### Futtatás
+```bash
+cd "f:/AI/Project koveto/backend"
+node seed.js
+```
+
+**Eredmény:**
+```
+✅ Database seeded successfully!
+   Users: 3
+   Projects: 3
+   Tasks: 13
+```
 
 ---
 

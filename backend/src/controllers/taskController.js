@@ -1,4 +1,5 @@
 const { pool } = require('../config/database');
+const emailService = require('../services/emailService');
 
 /**
  * Get all tasks with optional filters
@@ -133,6 +134,7 @@ async function createTask(req, res) {
       `SELECT
         t.*,
         u.name as owner_name,
+        u.email as owner_email,
         p.name as project_name,
         p.color as project_color
       FROM tasks t
@@ -142,10 +144,18 @@ async function createTask(req, res) {
       [result.insertId]
     );
 
+    const task = tasks[0];
+
+    // Send email notification (async, don't wait)
+    if (task.owner_email) {
+      emailService.sendTaskAssignment(task, { email: task.owner_email, name: task.owner_name })
+        .catch(err => console.error('Email send error:', err));
+    }
+
     res.status(201).json({
       success: true,
       message: 'Task created successfully',
-      data: tasks[0]
+      data: task
     });
   } catch (error) {
     console.error('Create task error:', error);
@@ -165,8 +175,8 @@ async function updateTask(req, res) {
     const taskId = req.params.id;
     const { name, description, start_date, deadline, owner_id, status, priority } = req.body;
 
-    // Check if task exists
-    const [existing] = await pool.query('SELECT id FROM tasks WHERE id = ?', [taskId]);
+    // Check if task exists and get old status for email notification
+    const [existing] = await pool.query('SELECT id, status FROM tasks WHERE id = ?', [taskId]);
 
     if (existing.length === 0) {
       return res.status(404).json({
@@ -174,6 +184,9 @@ async function updateTask(req, res) {
         message: 'Task not found'
       });
     }
+
+    const oldStatus = existing[0].status;
+    const statusChanged = status !== undefined && status !== oldStatus;
 
     // Build update query dynamically
     const updates = [];
@@ -206,6 +219,7 @@ async function updateTask(req, res) {
       `SELECT
         t.*,
         u.name as owner_name,
+        u.email as owner_email,
         p.name as project_name,
         p.color as project_color
       FROM tasks t
@@ -215,10 +229,18 @@ async function updateTask(req, res) {
       [taskId]
     );
 
+    const task = tasks[0];
+
+    // Send email notification if status changed
+    if (statusChanged && task.owner_email) {
+      emailService.sendTaskStatusChange(task, { email: task.owner_email, name: task.owner_name }, oldStatus, status)
+        .catch(err => console.error('Email send error:', err));
+    }
+
     res.json({
       success: true,
       message: 'Task updated successfully',
-      data: tasks[0]
+      data: task
     });
   } catch (error) {
     console.error('Update task error:', error);
