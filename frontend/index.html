@@ -680,9 +680,10 @@
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 
     <script>
-        // Configuration
-        const API_URL = 'http://localhost:3001/api';
-        const SOCKET_URL = 'http://localhost:3001';
+        // Configuration - automatically detect server hostname
+        const hostname = window.location.hostname || 'localhost';
+        const API_URL = `http://${hostname}:3001/api`;
+        const SOCKET_URL = `http://${hostname}:3001`;
 
         // Global state
         let currentUser = null;

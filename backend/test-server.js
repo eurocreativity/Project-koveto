@@ -14,12 +14,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:8000',
+    origin: '*',  // Allow all origins for testing
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
 
-app.use(cors());
+app.use(cors());  // Allow all CORS requests for testing
 app.use(express.json());
 
 const JWT_SECRET = 'test_secret_key';
